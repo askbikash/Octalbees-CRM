@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  BDE
+}
+
+enum LeadSource {
+  WEBSITE
+  INSTAGRAM
+  LINKEDIN
+  WHATSAPP
+  COLLEGE_OUTREACH
+  STUDENT_COMMUNITY
+  REFERRAL
+  GOOGLE
+  ADVERTISEMENT
+  EVENT
+  OTHER
+}
+
+enum LeadType {
+  STUDENT
+  COLLEGE
+  TPO
+  COLLEGE_CONTACT
+  STUDENT_CLUB
+  TRAINING_PARTNER
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  INTERESTED
+  FOLLOW_UP
+  MEETING_SCHEDULED
+  NEGOTIATION
+  CONVERTED
+  NOT_INTERESTED
+  LOST
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  HOT
+}
+
+enum CollegeType {
+  COLLEGE
+  UNIVERSITY
+  INSTITUTE
+  TRAINING_INSTITUTE
+  OTHER
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  MISSED
+  CANCELLED
+}
+
+enum FollowUpType {
+  CALL
+  WHATSAPP
+  EMAIL
+  MEETING
+  OTHER
+}
+
+enum ActivityType {
+  CALL
+  WHATSAPP
+  EMAIL
+  MEETING
+  NOTE
+  STATUS_CHANGE
+  ASSIGNMENT
+  FOLLOW_UP_CREATED
+  FOLLOW_UP_COMPLETED
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password_hash String
+  role          UserRole @default(BDE)
+  phone         String?
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relationships
+  assigned_leads         Lead[]              @relation("AssignedLeads")
+  created_leads          Lead[]              @relation("CreatedLeads")
+  activities             Activity[]
+  assigned_follow_ups    FollowUp[]          @relation("AssignedFollowUps")
+  created_follow_ups     FollowUp[]          @relation("CreatedFollowUps")
+  created_colleges       College[]           @relation("CreatedColleges")
+  status_history_changes LeadStatusHistory[]
+  imports                Import[]
+
+  @@map("users")
+}
+
+model College {
+  id         String       @id @default(uuid())
+  name       String
+  city       String?
+  state      String?
+  website    String?
+  email      String?
+  phone      String?
+  address    String?
+  type       CollegeType?
+  notes      String?
+  created_by String?
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  // Relationships
+  leads   Lead[]
+  creator User?  @relation("CreatedColleges", fields: [created_by], references: [id])
+
+  @@map("colleges")
+}
+
+model Lead {
+  id              String       @id @default(uuid())
+  lead_code       String       @unique
+  name            String
+  lead_type       LeadType     @default(STUDENT)
+  email           String?
+  phone           String?
+  alternate_phone String?
+  college_id      String?
+  designation     String?
+  city            String?
+  source          LeadSource   @default(OTHER)
+  status          LeadStatus   @default(NEW)
+  priority        LeadPriority @default(MEDIUM)
+
+  assigned_to       String?
+  last_contacted_at DateTime?
+  next_follow_up_at DateTime?
+  converted_at      DateTime?
+  lost_reason       String?
+  notes             String?
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relationships
+  assigned_user  User?               @relation("AssignedLeads", fields: [assigned_to], references: [id])
+  creator        User?               @relation("CreatedLeads", fields: [created_by], references: [id])
+  college        College?            @relation(fields: [college_id], references: [id])
+  follow_ups     FollowUp[]
+  activities     Activity[]
+  status_history LeadStatusHistory[]
+
+  // Indexes for performance optimization
+  @@index([email])
+  @@index([phone])
+  @@index([lead_code])
+  @@index([status])
+  @@index([assigned_to])
+  @@index([next_follow_up_at])
+  @@index([created_at])
+  @@index([college_id])
+  @@map("leads")
+}
+
+model FollowUp {
+  id           String         @id @default(uuid())
+  lead_id      String
+  assigned_to  String?
+  scheduled_at DateTime
+  status       FollowUpStatus @default(PENDING)
+  type         FollowUpType
+  notes        String?
+  completed_at DateTime?
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relationships
+  lead          Lead  @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  assigned_user User? @relation("AssignedFollowUps", fields: [assigned_to], references: [id])
+  creator       User? @relation("CreatedFollowUps", fields: [created_by], references: [id])
+
+  @@map("follow_ups")
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  lead_id     String
+  user_id     String?
+  type        ActivityType
+  description String
+  created_at  DateTime     @default(now())
+
+  // Relationships
+  lead Lead  @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@map("activities")
+}
+
+model LeadStatusHistory {
+  id         String     @id @default(uuid())
+  lead_id    String
+  old_status LeadStatus
+  new_status LeadStatus
+  changed_by String?
+  reason     String?
+  created_at DateTime   @default(now())
+
+  // Relationships
+  lead Lead  @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [changed_by], references: [id])
+
+  @@map("lead_status_history")
+}
+
+model Import {
+  id             String   @id @default(uuid())
+  file_name      String
+  total_rows     Int
+  imported_rows  Int
+  duplicate_rows Int
+  invalid_rows   Int
+  created_by     String?
+  created_at     DateTime @default(now())
+
+  // Relationships
+  user User? @relation(fields: [created_by], references: [id])
+
+  @@map("imports")
+}
