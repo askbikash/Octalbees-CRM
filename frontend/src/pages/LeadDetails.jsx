@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Phone, Mail, Building2, Calendar, Clock, Activity, Flag, ChevronDown, CheckCircle2, AlertCircle, Briefcase } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, Building2, Calendar, Clock, Activity, Flag, ChevronDown, CheckCircle2, AlertCircle, Briefcase, Send, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
@@ -20,6 +21,9 @@ const LeadDetails = () => {
   const navigate = useNavigate();
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [noteText, setNoteText] = useState('');
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+  const toast = useToast();
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [users, setUsers] = useState([]);
 
@@ -68,9 +72,9 @@ const LeadDetails = () => {
     } catch (error) {
       if (error.response?.data?.errors) {
         const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        alert(`Validation failed - ${messages}`);
+        toast.error(`Validation failed - ${messages}`);
       } else {
-        alert(error.response?.data?.message || 'Failed to update status');
+        toast.error(error.response?.data?.message || 'Failed to update status');
       }
     } finally {
       setIsUpdatingStatus(false);
@@ -81,14 +85,30 @@ const LeadDetails = () => {
     const newAssignee = e.target.value;
     try {
       await api.put(`/leads/${id}`, { assigned_to: newAssignee || null });
+      toast.success('Assignee updated');
       fetchLeadDetails();
     } catch (error) {
       if (error.response?.data?.errors) {
         const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        alert(`Validation failed - ${messages}`);
+        toast.error(`Validation failed - ${messages}`);
       } else {
-        alert(error.response?.data?.message || 'Failed to update assignee');
+        toast.error(error.response?.data?.message || 'Failed to update assignee');
       }
+    }
+  };
+
+  const submitNote = async () => {
+    if (!noteText.trim()) return;
+    try {
+      setIsSubmittingNote(true);
+      await api.post(`/leads/${id}/notes`, { note: noteText });
+      setNoteText('');
+      toast.success('Note added');
+      fetchLeadDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add note');
+    } finally {
+      setIsSubmittingNote(false);
     }
   };
 
@@ -255,6 +275,28 @@ const LeadDetails = () => {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6 flex items-center gap-2">
               <Activity size={16} className="text-purple-600 dark:text-orange-400" /> Activity Timeline
             </h3>
+
+            {/* Quick Note Input */}
+            <div className="mb-8 flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                <User size={14} className="text-slate-500" />
+              </div>
+              <div className="flex-1 relative">
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Write a quick note..."
+                  className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl text-sm outline-none focus:border-purple-500 dark:focus:border-orange-500 focus:ring-1 focus:ring-purple-500 dark:focus:ring-orange-500 transition-all resize-none min-h-[60px]"
+                />
+                <button
+                  onClick={submitNote}
+                  disabled={!noteText.trim() || isSubmittingNote}
+                  className="absolute right-2 top-2 p-2 bg-purple-600 dark:bg-orange-500 text-white rounded-xl hover:bg-purple-700 dark:hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmittingNote ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                </button>
+              </div>
+            </div>
 
             <div className="relative border-l-2 border-slate-100 dark:border-zinc-800/80 ml-3 pl-6 space-y-8">
               

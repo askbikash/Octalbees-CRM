@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/prisma');
 const { z } = require('zod');
-
-const prisma = new PrismaClient();
 
 const createFollowUpSchema = z.object({
   lead_id: z.string().uuid(),

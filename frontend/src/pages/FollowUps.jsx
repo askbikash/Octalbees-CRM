@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, CheckCircle2, XCircle, AlertCircle, Phone, Mail, Calendar, Clock, Loader2, MessageCircle } from 'lucide-react';
+import { CalendarDays, CheckCircle2, XCircle, AlertCircle, Phone, Mail, Calendar, Clock, Loader2, MessageCircle, X } from 'lucide-react';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -11,7 +12,11 @@ function cn(...inputs) {
 const FollowUps = () => {
   const [followUps, setFollowUps] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [timeframe, setTimeframe] = useState('today'); // 'today', 'upcoming', 'overdue'
+  const [timeframe, setTimeframe] = useState('today');
+  const [actionModal, setActionModal] = useState({ open: false, id: null, status: null });
+  const [actionNotes, setActionNotes] = useState('');
+  const [isActioning, setIsActioning] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchFollowUps();
@@ -24,23 +29,28 @@ const FollowUps = () => {
       setFollowUps(res.data.data);
     } catch (error) {
       console.error('Failed to fetch follow-ups', error);
+      toast.error('Failed to load follow-ups.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAction = async (id, status) => {
+  const openActionModal = (id, status) => {
+    setActionModal({ open: true, id, status });
+    setActionNotes('');
+  };
+
+  const handleActionSubmit = async () => {
     try {
-      const notes = prompt(`Enter any notes for marking this follow-up as ${status}:`);
-      await api.patch(`/followups/${id}`, { status, notes });
+      setIsActioning(true);
+      await api.patch(`/followups/${actionModal.id}`, { status: actionModal.status, notes: actionNotes || undefined });
+      toast.success(`Follow-up marked as ${actionModal.status.toLowerCase()}!`);
+      setActionModal({ open: false, id: null, status: null });
       fetchFollowUps();
     } catch (error) {
-      if (error.response?.data?.errors) {
-        const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        alert(`Validation failed - ${messages}`);
-      } else {
-        alert(error.response?.data?.message || 'Failed to update follow-up');
-      }
+      toast.error(error.response?.data?.message || 'Failed to update follow-up.');
+    } finally {
+      setIsActioning(false);
     }
   };
 
@@ -141,7 +151,7 @@ const FollowUps = () => {
 
                 <div className="flex items-center gap-2 pt-4 border-t border-slate-200 dark:border-zinc-800/50">
                   <button 
-                    onClick={() => handleAction(task.id, 'COMPLETED')}
+                    onClick={() => openActionModal(task.id, 'COMPLETED')}
                     className="flex-1 py-2 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 transition-colors"
                   >
                     Complete
@@ -158,7 +168,7 @@ const FollowUps = () => {
                     </a>
                   )}
                   <button 
-                    onClick={() => handleAction(task.id, 'MISSED')}
+                    onClick={() => openActionModal(task.id, 'MISSED')}
                     className="px-3 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-colors"
                     title="Mark as Missed"
                   >
@@ -171,6 +181,53 @@ const FollowUps = () => {
         )}
 
       </div>
+
+      {/* Action Modal */}
+      {actionModal.open && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setActionModal({ open: false, id: null, status: null })}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md border border-slate-200 dark:border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {actionModal.status === 'COMPLETED' ? '✅ Complete Follow-up' : '❌ Mark as Missed'}
+              </h3>
+              <button onClick={() => setActionModal({ open: false, id: null, status: null })} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">Notes (optional)</label>
+              <textarea
+                value={actionNotes}
+                onChange={(e) => setActionNotes(e.target.value)}
+                rows={3}
+                placeholder="Add any notes about this follow-up..."
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-purple-500 dark:focus:border-orange-500 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 transition-all resize-none"
+              />
+            </div>
+            <div className="p-6 pt-0 flex gap-3">
+              <button
+                onClick={() => setActionModal({ open: false, id: null, status: null })}
+                className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleActionSubmit}
+                disabled={isActioning}
+                className={`flex-1 py-2.5 rounded-xl font-bold text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2 ${
+                  actionModal.status === 'COMPLETED'
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {isActioning ? <Loader2 className="animate-spin" size={16} /> : null}
+                {actionModal.status === 'COMPLETED' ? 'Mark Complete' : 'Mark Missed'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

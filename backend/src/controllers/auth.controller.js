@@ -1,9 +1,7 @@
 const bcrypt = require('bcrypt');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/prisma');
 const { generateToken } = require('../utils/jwt');
 const { z } = require('zod');
-
-const prisma = new PrismaClient();
 
 const loginSchema = z.object({
   email: z.string().email(),

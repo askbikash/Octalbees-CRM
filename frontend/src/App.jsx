@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 
 // Layouts & Pages
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -13,6 +14,7 @@ import Colleges from './pages/Colleges';
 import FollowUps from './pages/FollowUps';
 import Team from './pages/Team';
 import Settings from './pages/Settings';
+import AuditTrail from './pages/AuditTrail';
 
 // Temporary placeholders for other pages
 const Placeholder = ({ title }) => (
@@ -36,6 +38,7 @@ const ProtectedRoute = ({ children }) => {
 const App = () => {
   return (
     <ThemeProvider>
+      <ToastProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
@@ -53,12 +56,14 @@ const App = () => {
               <Route path="colleges" element={<Colleges />} />
               <Route path="followups" element={<FollowUps />} />
               <Route path="users" element={<Team />} />
+              <Route path="audit" element={<AuditTrail />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 };

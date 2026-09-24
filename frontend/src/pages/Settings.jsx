@@ -3,9 +3,11 @@ import { Settings as SettingsIcon, User, Lock, Loader2, ShieldCheck, Mail, Phone
 import { useForm } from 'react-hook-form';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const Settings = () => {
   const { user, login } = useAuth();
+  const toast = useToast();
   
   const [profileMsg, setProfileMsg] = useState(null);
   const [passwordMsg, setPasswordMsg] = useState(null);
@@ -34,8 +36,10 @@ const Settings = () => {
       }
       
       setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
+      toast.success('Profile updated successfully!');
     } catch (error) {
       setProfileMsg({ type: 'error', text: error.response?.data?.message || 'Failed to update profile' });
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     }
   };
 
@@ -52,9 +56,11 @@ const Settings = () => {
         newPassword: data.newPassword
       });
       setPasswordMsg({ type: 'success', text: 'Password updated successfully!' });
+      toast.success('Password updated successfully!');
       resetPass();
     } catch (error) {
       setPasswordMsg({ type: 'error', text: error.response?.data?.message || 'Failed to update password' });
+      toast.error(error.response?.data?.message || 'Failed to update password');
     }
   };
 

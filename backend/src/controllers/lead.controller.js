@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/prisma');
 const { z } = require('zod');
 const fs = require('fs');
 const { parse } = require('csv-parse');
-
-const prisma = new PrismaClient();
 
 const generateLeadCode = async () => {
   const lastLead = await prisma.lead.findFirst({
@@ -458,6 +456,110 @@ const exportLeads = async (req, res) => {
   }
 };
 
+const addLeadNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+    const userId = req.user.id;
+
+    if (!note) {
+      return res.status(400).json({ success: false, message: 'Note is required' });
+    }
+
+    const lead = await prisma.lead.findUnique({ where: { id } });
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    if (req.user.role !== 'ADMIN' && lead.assigned_to !== userId) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const activity = await prisma.activity.create({
+      data: {
+        lead_id: id,
+        user_id: userId,
+        type: 'NOTE',
+        description: note
+      },
+      include: {
+        user: { select: { name: true } }
+      }
+    });
+
+    res.status(201).json({ success: true, message: 'Note added successfully', data: activity });
+  } catch (error) {
+    console.error('Add Note Error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+const bulkActionLeads = async (req, res) => {
+  try {
+    const { leadIds, action, value } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    if (!Array.isArray(leadIds) || leadIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'No leads selected' });
+    }
+
+    // Verify access
+    if (role !== 'ADMIN') {
+      const accessCheck = await prisma.lead.count({
+        where: { id: { in: leadIds }, assigned_to: userId }
+      });
+      if (accessCheck !== leadIds.length) {
+        return res.status(403).json({ success: false, message: 'Access denied for one or more leads' });
+      }
+    }
+
+    let updatedCount = 0;
+    
+    await prisma.$transaction(async (tx) => {
+      if (action === 'delete') {
+        if (role !== 'ADMIN') throw new Error('Only admins can delete leads');
+        const result = await tx.lead.deleteMany({ where: { id: { in: leadIds } } });
+        updatedCount = result.count;
+      } else if (action === 'status') {
+        const result = await tx.lead.updateMany({
+          where: { id: { in: leadIds } },
+          data: { status: value }
+        });
+        updatedCount = result.count;
+        
+        // Log activities
+        const activities = leadIds.map(id => ({
+          lead_id: id,
+          user_id: userId,
+          type: 'STATUS_CHANGE',
+          description: `Bulk status changed to ${value}`
+        }));
+        await tx.activity.createMany({ data: activities });
+      } else if (action === 'assign') {
+        if (role !== 'ADMIN') throw new Error('Only admins can reassign leads');
+        const result = await tx.lead.updateMany({
+          where: { id: { in: leadIds } },
+          data: { assigned_to: value || null }
+        });
+        updatedCount = result.count;
+        
+        const activities = leadIds.map(id => ({
+          lead_id: id,
+          user_id: userId,
+          type: 'NOTE',
+          description: value ? `Bulk assigned to user ${value}` : 'Bulk unassigned'
+        }));
+        await tx.activity.createMany({ data: activities });
+      } else {
+        throw new Error('Invalid bulk action');
+      }
+    });
+
+    res.status(200).json({ success: true, message: `Successfully applied ${action} to ${updatedCount} leads` });
+  } catch (error) {
+    console.error('Bulk Action Error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
 module.exports = {
   createLead,
   getLeads,
@@ -466,5 +568,7 @@ module.exports = {
   updateLead,
   deleteLead,
   importLeads,
-  exportLeads
+  exportLeads,
+  addLeadNote,
+  bulkActionLeads
 };

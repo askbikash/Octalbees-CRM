@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 
 const authenticate = async (req, res, next) => {
   try {
@@ -11,7 +10,13 @@ const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-do-not-use-in-prod');
+    
+    if (!process.env.JWT_SECRET) {
+      console.error('FATAL: JWT_SECRET environment variable is not set!');
+      return res.status(500).json({ success: false, message: 'Server configuration error' });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Check if user still exists and is active
     const user = await prisma.user.findUnique({

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Plus, Loader2, Calendar, Phone, Mail, X, AlertTriangle, Edit, Trash2, MoreHorizontal, Upload, FileText, Eye, ChevronDown, Download } from 'lucide-react';
+import { Users, Search, Plus, Loader2, Calendar, Phone, Mail, X, AlertTriangle, Edit, Trash2, MoreHorizontal, Upload, FileText, Eye, ChevronDown, Download, MessageSquare, CheckSquare } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
@@ -34,9 +35,17 @@ const Leads = () => {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterAssignee, setFilterAssignee] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const toast = useToast();
+
+  // Selection & Bulk Actions
+  const [selectedLeads, setSelectedLeads] = useState([]);
+  const [isBulkActioning, setIsBulkActioning] = useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [noteModal, setNoteModal] = useState({ open: false, leadId: null, note: '' });
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -63,7 +72,7 @@ const Leads = () => {
     fetchLeads();
     fetchColleges(); // For the dropdown
     fetchUsers(); // For assignment
-  }, [search, filterStatus, filterAssignee]);
+  }, [search, filterStatus, filterAssignee, currentPage]);
 
   const fetchUsers = async () => {
     try {
@@ -86,22 +95,74 @@ const Leads = () => {
       link.remove();
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Failed to export leads');
+      toast.error('Failed to export leads');
     }
   };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterStatus, filterAssignee]);
 
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      let query = `/leads?search=${search}`;
+      let query = `/leads?search=${search}&page=${currentPage}&limit=25`;
       if (filterStatus) query += `&status=${filterStatus}`;
       if (filterAssignee) query += `&assigned_to=${filterAssignee}`;
       const res = await api.get(query);
       setLeads(res.data.data);
+      if (res.data.pagination) setPagination(res.data.pagination);
+      setSelectedLeads([]); // clear selection on fetch
     } catch (error) {
       console.error('Failed to fetch leads', error);
+      toast.error('Failed to load leads.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedLeads.length === leads.length) {
+      setSelectedLeads([]);
+    } else {
+      setSelectedLeads(leads.map(l => l.id));
+    }
+  };
+
+  const toggleSelectLead = (id) => {
+    setSelectedLeads(prev => 
+      prev.includes(id) ? prev.filter(lId => lId !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAction = async (action, value = null) => {
+    if (selectedLeads.length === 0) return;
+    
+    if (action === 'delete') {
+      if (!window.confirm(`Are you sure you want to delete ${selectedLeads.length} leads?`)) return;
+    }
+
+    try {
+      setIsBulkActioning(true);
+      await api.post('/leads/bulk', { leadIds: selectedLeads, action, value });
+      toast.success(`Bulk action completed on ${selectedLeads.length} leads`);
+      fetchLeads();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Bulk action failed');
+    } finally {
+      setIsBulkActioning(false);
+    }
+  };
+
+  const submitQuickNote = async () => {
+    if (!noteModal.note.trim()) return;
+    try {
+      await api.post(`/leads/${noteModal.leadId}/notes`, { note: noteModal.note });
+      toast.success('Note added successfully');
+      setNoteModal({ open: false, leadId: null, note: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add note');
     }
   };
 
@@ -321,6 +382,16 @@ const Leads = () => {
           <table className="w-full text-left text-sm relative">
             <thead className="bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md text-slate-500 dark:text-zinc-400 sticky top-0 z-10 shadow-sm border-b border-slate-200 dark:border-zinc-800">
               <tr>
+                <th className="px-6 py-4 w-10">
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-600 dark:border-zinc-700 dark:bg-zinc-800 dark:checked:bg-orange-500"
+                      checked={selectedLeads.length === leads.length && leads.length > 0}
+                      onChange={toggleSelectAll}
+                    />
+                  </div>
+                </th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Lead Information</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Contact</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Status</th>
@@ -353,6 +424,16 @@ const Leads = () => {
                     onClick={() => navigate(`/leads/${lead.id}`)}
                     className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer bg-white dark:bg-zinc-900"
                   >
+                    <td className="px-6 py-4 w-10" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-600 dark:border-zinc-700 dark:bg-zinc-800 dark:checked:bg-orange-500"
+                          checked={selectedLeads.includes(lead.id)}
+                          onChange={() => toggleSelectLead(lead.id)}
+                        />
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full shadow-sm ${priorityColors[lead.priority] || priorityColors.MEDIUM}`} style={{ backgroundColor: 'currentColor' }} />
@@ -442,6 +523,12 @@ const Leads = () => {
                             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-zinc-300 dark:hover:text-blue-400 dark:hover:bg-blue-500/10 rounded-lg transition-colors text-left"
                           >
                             <Eye size={14} /> View
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setNoteModal({ open: true, leadId: lead.id, note: '' }); }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 dark:text-zinc-300 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 rounded-lg transition-colors text-left"
+                          >
+                            <MessageSquare size={14} /> Quick Note
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); openEditModal(lead); }}
@@ -777,6 +864,165 @@ const Leads = () => {
         </div>
       )}
 
+    {/* Pagination Footer */}
+      {pagination.totalPages > 1 && (
+        <div className="shrink-0 px-5 py-3 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30 flex items-center justify-between">
+          <p className="text-sm text-slate-500 dark:text-zinc-400">
+            Showing <span className="font-bold text-slate-700 dark:text-zinc-200">{((currentPage - 1) * 25) + 1}-{Math.min(currentPage * 25, pagination.total)}</span> of <span className="font-bold text-slate-700 dark:text-zinc-200">{pagination.total}</span> leads
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-lg text-sm font-bold border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+            >
+              Previous
+            </button>
+            {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+              let pageNum;
+              if (pagination.totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= pagination.totalPages - 2) {
+                pageNum = pagination.totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
+                    currentPage === pageNum
+                      ? 'bg-purple-600 dark:bg-orange-500 text-white dark:text-zinc-950'
+                      : 'border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))} 
+              disabled={currentPage === pagination.totalPages}
+              className="px-3 py-1.5 rounded-lg text-sm font-bold border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+    
+
+      {/* Quick Note Modal */}
+      {noteModal.open && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setNoteModal({ open: false, leadId: null, note: '' })}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md border border-slate-200 dark:border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <MessageSquare className="text-emerald-500" size={20} />
+                Add Quick Note
+              </h3>
+              <button onClick={() => setNoteModal({ open: false, leadId: null, note: '' })} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5">
+              <textarea
+                autoFocus
+                value={noteModal.note}
+                onChange={(e) => setNoteModal(prev => ({ ...prev, note: e.target.value }))}
+                rows={4}
+                placeholder="Type your note here..."
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+              />
+            </div>
+            <div className="p-5 pt-0 flex justify-end gap-3">
+              <button
+                onClick={() => setNoteModal({ open: false, leadId: null, note: '' })}
+                className="px-5 py-2.5 rounded-xl font-bold text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitQuickNote}
+                disabled={!noteModal.note.trim()}
+                className="px-5 py-2.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm shadow-emerald-500/25"
+              >
+                Save Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bulk Action Bar */}
+      {selectedLeads.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-10 fade-in duration-300">
+          <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-4">
+            <div className="flex items-center gap-2 pr-4 border-r border-slate-700 dark:border-slate-200">
+              <CheckSquare size={18} className="text-purple-400 dark:text-orange-500" />
+              <span className="font-bold">{selectedLeads.length} Selected</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <select 
+                onChange={(e) => {
+                  if(e.target.value) {
+                    handleBulkAction('status', e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                disabled={isBulkActioning}
+                className="bg-slate-800 dark:bg-slate-100 border border-slate-700 dark:border-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none cursor-pointer hover:bg-slate-700 dark:hover:bg-slate-200 transition-colors"
+              >
+                <option value="">Change Status...</option>
+                {Object.keys(statusColors).map(s => (
+                  <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                ))}
+              </select>
+
+              {user?.role === 'ADMIN' && (
+                <>
+                  <select 
+                    onChange={(e) => {
+                      if(e.target.value) {
+                        handleBulkAction('assign', e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    disabled={isBulkActioning}
+                    className="bg-slate-800 dark:bg-slate-100 border border-slate-700 dark:border-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none cursor-pointer hover:bg-slate-700 dark:hover:bg-slate-200 transition-colors"
+                  >
+                    <option value="">Assign To...</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                  
+                  <button 
+                    onClick={() => handleBulkAction('delete')}
+                    disabled={isBulkActioning}
+                    className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 dark:text-red-600 dark:hover:text-red-700 dark:hover:bg-red-100 rounded-lg transition-colors"
+                    title="Delete Selected"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </>
+              )}
+              
+              <button 
+                onClick={() => setSelectedLeads([])}
+                className="p-1.5 text-slate-400 hover:text-white dark:text-slate-500 dark:hover:text-slate-900 rounded-lg transition-colors ml-2"
+                title="Clear Selection"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

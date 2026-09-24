@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarDays, Building2, Settings, LogOut, Menu, X, Sun, Moon, Zap } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, Building2, Settings, LogOut, Menu, X, Sun, Moon, Zap, Activity } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { clsx } from 'clsx';
@@ -24,6 +24,10 @@ const DashboardLayout = () => {
     { name: 'Team & Users', path: '/users', icon: Users },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
+
+  if (user?.role === 'ADMIN') {
+    navItems.splice(5, 0, { name: 'Audit Trail', path: '/audit', icon: Activity });
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
