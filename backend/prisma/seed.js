@@ -3,7 +3,8 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = 'admin@octalbees.com';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@octalbees.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin_default_pass';
   
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail }
@@ -14,7 +15,7 @@ async function main() {
     return;
   }
 
-  const password_hash = await bcrypt.hash('Admin@123', 10);
+  const password_hash = await bcrypt.hash(adminPassword, 10);
 
   const admin = await prisma.user.create({
     data: {
@@ -28,7 +29,7 @@ async function main() {
 
   console.log('Created default admin user:');
   console.log(`Email: ${admin.email}`);
-  console.log(`Password: Admin@123`);
+  console.log(`Note: Password is set from ADMIN_PASSWORD environment variable or default.`);
 }
 
 main()
