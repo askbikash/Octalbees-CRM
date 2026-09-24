@@ -46,6 +46,7 @@ const Leads = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteModal, setNoteModal] = useState({ open: false, leadId: null, note: '' });
+  const [deleteModal, setDeleteModal] = useState({ open: false, type: null, data: null });
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -140,7 +141,8 @@ const Leads = () => {
     if (selectedLeads.length === 0) return;
     
     if (action === 'delete') {
-      if (!window.confirm(`Are you sure you want to delete ${selectedLeads.length} leads?`)) return;
+      setDeleteModal({ open: true, type: 'bulk', data: null });
+      return;
     }
 
     try {
@@ -225,16 +227,33 @@ const Leads = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete lead ${name}? This will also delete their activity and follow-ups. This action cannot be undone.`)) {
-      return;
+  const handleDelete = (id, name) => {
+    setDeleteModal({ open: true, type: 'single', data: { id, name } });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.type === 'single') {
+      try {
+        await api.delete(`/leads/${deleteModal.data.id}`);
+        toast.success('Lead deleted successfully');
+        fetchLeads();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to delete lead.');
+      }
+    } else if (deleteModal.type === 'bulk') {
+      try {
+        setIsBulkActioning(true);
+        await api.post('/leads/bulk', { leadIds: selectedLeads, action: 'delete' });
+        toast.success(`Successfully deleted ${selectedLeads.length} leads`);
+        setSelectedLeads([]);
+        fetchLeads();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Bulk delete failed');
+      } finally {
+        setIsBulkActioning(false);
+      }
     }
-    try {
-      await api.delete(`/leads/${id}`);
-      fetchLeads();
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to delete lead.');
-    }
+    setDeleteModal({ open: false, type: null, data: null });
   };
 
   const handleQuickStatusChange = async (leadId, newStatus) => {
@@ -242,7 +261,7 @@ const Leads = () => {
       await api.patch(`/leads/${leadId}/status`, { status: newStatus });
       fetchLeads(); // Refresh leads table silently
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update status');
+      toast.error(error.response?.data?.message || 'Failed to update status');
     }
   };
 
@@ -259,7 +278,7 @@ const Leads = () => {
       resetFollowUp();
       fetchLeads(); // Refresh leads to show updated next follow-up date
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to schedule follow-up');
+      toast.error(error.response?.data?.message || 'Failed to schedule follow-up');
     }
   };
 
@@ -1023,6 +1042,43 @@ const Leads = () => {
           </div>
         </div>
       )}
+      {/* Delete Confirmation Modal */}
+      {deleteModal.open && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="text-red-600 dark:text-red-500" size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                {deleteModal.type === 'single' ? 'Delete Lead' : 'Bulk Delete Leads'}
+              </h3>
+              <p className="text-slate-500 dark:text-zinc-400 mb-6">
+                {deleteModal.type === 'single' 
+                  ? `Are you sure you want to delete lead "${deleteModal.data.name}"? This action cannot be undone and will delete all associated activities and follow-ups.`
+                  : `Are you sure you want to delete ${selectedLeads.length} selected leads? This action cannot be undone.`
+                }
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteModal({ open: false, type: null, data: null })}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm shadow-red-500/25 flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={18} />
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
