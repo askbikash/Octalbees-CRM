@@ -9,6 +9,8 @@ dotenv.config();
 
 const app = express();
 
+app.set('trust proxy', 1); // Trust Render's reverse proxy for rate limiting
+
 // Security & Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
