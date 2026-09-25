@@ -108,7 +108,7 @@ const Team = () => {
         
         <button 
           onClick={() => { reset(); setIsModalOpen(true); }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-orange-500/20 w-fit shrink-0"
+          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 w-fit shrink-0"
         >
           <UserPlus size={18} />
           Add User
@@ -308,7 +308,7 @@ const Team = () => {
                 form="user-form"
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-orange-500/25"
+                className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-purple-500/25"
               >
                 {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : 'Create User'}
               </button>
@@ -337,7 +337,7 @@ const Team = () => {
 
             <div className="p-6">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-orange-500/10 mx-auto flex items-center justify-center mb-3">
+                <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-600/10 mx-auto flex items-center justify-center mb-3">
                   <span className="text-2xl font-bold text-purple-600 dark:text-orange-400">{selectedUser.name.charAt(0)}</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">{selectedUser.name}</h3>

@@ -89,7 +89,7 @@ const FollowUps = () => {
             onClick={() => setTimeframe('today')}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              timeframe === 'today' ? "bg-purple-50 text-purple-700 dark:bg-orange-500/10 dark:text-orange-400 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              timeframe === 'today' ? "bg-purple-50 text-purple-700 dark:bg-purple-600/10 dark:text-orange-400 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200"
             )}
           >
             Today
@@ -126,7 +126,7 @@ const FollowUps = () => {
                 
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-full bg-purple-100 dark:bg-orange-500/10 flex items-center justify-center text-purple-600 dark:text-orange-400">
+                    <span className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-600/10 flex items-center justify-center text-purple-600 dark:text-orange-400">
                       {getTypeIcon(task.type)}
                     </span>
                     <div>

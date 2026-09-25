@@ -89,7 +89,7 @@ const DashboardLayout = () => {
           <div className="bg-slate-50 dark:bg-zinc-900/80 rounded-2xl p-3 border border-slate-200 dark:border-zinc-800 shadow-sm transition-colors">
             
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 dark:from-orange-500 dark:to-orange-600 flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 dark:from-purple-500 dark:to-purple-600 flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0">
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">

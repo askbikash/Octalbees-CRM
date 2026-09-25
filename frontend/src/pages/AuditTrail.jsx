@@ -157,7 +157,7 @@ const AuditTrail = () => {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-orange-500/20 text-purple-600 dark:text-orange-400 flex items-center justify-center text-xs font-bold">
+                        <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-600/20 text-purple-600 dark:text-orange-400 flex items-center justify-center text-xs font-bold">
                           {act.user?.name?.[0] || '?'}
                         </div>
                         <span className="text-sm font-semibold text-slate-900 dark:text-white">{act.user?.name || 'System'}</span>
@@ -179,7 +179,7 @@ const AuditTrail = () => {
                     <td className="px-5 py-3">
                       {act.lead ? (
                         <div 
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 dark:bg-orange-500/10 text-purple-700 dark:text-orange-400 text-xs font-bold cursor-pointer hover:underline"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-600/10 text-purple-700 dark:text-orange-400 text-xs font-bold cursor-pointer hover:underline"
                           onClick={() => navigate(`/leads/${act.lead.id}`)}
                         >
                           <Hash size={12} />
@@ -227,7 +227,7 @@ const AuditTrail = () => {
                     onClick={() => setCurrentPage(pageNum)}
                     className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${
                       currentPage === pageNum
-                        ? 'bg-purple-600 dark:bg-orange-500 text-white dark:text-zinc-950'
+                        ? 'bg-purple-600 dark:bg-purple-500 text-white'
                         : 'border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800'
                     }`}
                   >

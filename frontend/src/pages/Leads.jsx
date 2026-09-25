@@ -10,9 +10,9 @@ const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
   CONTACTED: 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
   INTERESTED: 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20',
-  FOLLOW_UP: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20',
+  FOLLOW_UP: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-purple-600/10 dark:text-orange-400 dark:border-orange-500/20',
   MEETING_SCHEDULED: 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20',
-  NEGOTIATION: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20',
+  NEGOTIATION: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-purple-600/10 dark:text-orange-400 dark:border-orange-500/20',
   CONVERTED: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
   NOT_INTERESTED: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
   LOST: 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
@@ -349,7 +349,7 @@ const Leads = () => {
           )}
           <button 
             onClick={() => { setEditingLead(null); reset({}); setIsModalOpen(true); }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-orange-500/20 w-fit"
+            className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 w-fit"
           >
             <Plus size={18} />
             Add Lead
@@ -605,7 +605,7 @@ const Leads = () => {
               )}
 
               {duplicateWarning && (
-                <div className="mb-6 p-4 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 flex gap-3 items-start">
+                <div className="mb-6 p-4 rounded-xl bg-orange-50 dark:bg-purple-600/10 border border-orange-200 dark:border-orange-500/20 flex gap-3 items-start">
                   <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
                   <div>
                     <h3 className="font-bold text-orange-800 dark:text-orange-500 mb-1">Potential Duplicates Found!</h3>
@@ -619,7 +619,7 @@ const Leads = () => {
                     </ul>
                     <button 
                       onClick={handleSubmit((data) => onSubmit(data, true))}
-                      className="px-4 py-2 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white dark:text-zinc-950 rounded-lg text-sm font-bold shadow-sm transition-colors"
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
                     >
                       Ignore Warning & Create Anyway
                     </button>
@@ -738,7 +738,7 @@ const Leads = () => {
                 form="lead-form"
                 type="submit"
                 disabled={isSubmitting || duplicateWarning}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-orange-500/25"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-purple-500/25"
               >
                 {isSubmitting && <Loader2 className="animate-spin" size={18} />}
                 {editingLead ? 'Update Lead' : 'Create Lead'}
@@ -811,7 +811,7 @@ const Leads = () => {
                 form="schedule-form"
                 type="submit"
                 disabled={isSubmittingFollowUp}
-                className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-orange-500/25"
+                className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-purple-500/25"
               >
                 {isSubmittingFollowUp && <Loader2 className="animate-spin" size={18} />}
                 Confirm Schedule
@@ -841,7 +841,7 @@ const Leads = () => {
             </div>
 
             <div className="p-6 space-y-5 overflow-y-auto">
-              <div className="bg-purple-50 dark:bg-orange-500/10 p-4 rounded-xl text-sm text-purple-800 dark:text-orange-200 border border-purple-100 dark:border-orange-500/20">
+              <div className="bg-purple-50 dark:bg-purple-600/10 p-4 rounded-xl text-sm text-purple-800 dark:text-orange-200 border border-purple-100 dark:border-orange-500/20">
                 Upload a CSV file containing your leads. The first row must be headers matching the exact field names.
               </div>
               
@@ -873,7 +873,7 @@ const Leads = () => {
               <button 
                 onClick={handleImportSubmit}
                 disabled={!importFile || isImporting}
-                className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-orange-500/25"
+                className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white disabled:opacity-50 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-purple-500/25"
               >
                 {isImporting ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />}
                 {isImporting ? 'Importing...' : 'Upload & Import'}
@@ -914,7 +914,7 @@ const Leads = () => {
                   onClick={() => setCurrentPage(pageNum)}
                   className={`w-9 h-9 rounded-lg text-sm font-bold transition-colors ${
                     currentPage === pageNum
-                      ? 'bg-purple-600 dark:bg-orange-500 text-white dark:text-zinc-950'
+                      ? 'bg-purple-600 dark:bg-purple-500 text-white'
                       : 'border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800'
                   }`}
                 >

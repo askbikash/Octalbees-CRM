@@ -8,9 +8,9 @@ const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
   CONTACTED: 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
   INTERESTED: 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20',
-  FOLLOW_UP: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20',
+  FOLLOW_UP: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-purple-600/10 dark:text-orange-400 dark:border-orange-500/20',
   MEETING_SCHEDULED: 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20',
-  NEGOTIATION: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20',
+  NEGOTIATION: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-purple-600/10 dark:text-orange-400 dark:border-orange-500/20',
   CONVERTED: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
   NOT_INTERESTED: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
   LOST: 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
@@ -134,7 +134,7 @@ const LeadDetails = () => {
             <ArrowLeft size={16} /> Back to Pipeline
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-orange-500/10 flex items-center justify-center text-purple-600 dark:text-orange-400 font-bold text-xl">
+            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-600/10 flex items-center justify-center text-purple-600 dark:text-orange-400 font-bold text-xl">
               {lead.name.charAt(0)}
             </div>
             <div>
@@ -291,7 +291,7 @@ const LeadDetails = () => {
                 <button
                   onClick={submitNote}
                   disabled={!noteText.trim() || isSubmittingNote}
-                  className="absolute right-2 top-2 p-2 bg-purple-600 dark:bg-orange-500 text-white rounded-xl hover:bg-purple-700 dark:hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                  className="absolute right-2 top-2 p-2 bg-purple-600 dark:bg-purple-500 text-white rounded-xl hover:bg-purple-700 dark:hover:bg-purple-600 disabled:opacity-50 transition-colors"
                 >
                   {isSubmittingNote ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 </button>
@@ -306,10 +306,10 @@ const LeadDetails = () => {
                   <div className="absolute -left-[35px] w-5 h-5 rounded-full bg-orange-50 border-2 border-orange-500 dark:bg-zinc-900 flex items-center justify-center">
                     <Clock size={10} className="text-orange-500" />
                   </div>
-                  <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-2xl p-4">
+                  <div className="bg-orange-50 dark:bg-purple-600/10 border border-orange-100 dark:border-orange-500/20 rounded-2xl p-4">
                     <div className="flex justify-between items-start mb-1">
                       <p className="text-sm font-bold text-orange-800 dark:text-orange-400">Upcoming {followup.type}</p>
-                      <span className="text-xs font-semibold text-orange-600 dark:text-orange-500 bg-white dark:bg-orange-500/10 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-semibold text-orange-600 dark:text-orange-500 bg-white dark:bg-purple-600/10 px-2 py-0.5 rounded-md">
                         {new Date(followup.scheduled_at).toLocaleString()}
                       </span>
                     </div>

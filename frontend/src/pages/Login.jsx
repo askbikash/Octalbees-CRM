@@ -177,7 +177,7 @@ const Login = () => {
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl text-white font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 focus:ring-4 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 transition-all duration-300 disabled:opacity-70 mt-8 group shadow-lg shadow-purple-600/20 dark:shadow-orange-500/20 hover:shadow-xl hover:-translate-y-0.5"
+                className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl text-white font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-purple-500 dark:to-purple-600 dark:hover:from-orange-600 dark:hover:to-orange-700 focus:ring-4 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 transition-all duration-300 disabled:opacity-70 mt-8 group shadow-lg shadow-purple-600/20 dark:shadow-purple-500/20 hover:shadow-xl hover:-translate-y-0.5"
               >
                 {isSubmitting ? (
                   <Loader2 className="animate-spin" size={20} />

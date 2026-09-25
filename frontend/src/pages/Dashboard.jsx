@@ -123,7 +123,7 @@ const Dashboard = () => {
           )}
           <button 
             onClick={() => navigate('/leads')}
-            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-orange-500/20 flex items-center gap-2"
+            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 flex items-center gap-2"
           >
             <Plus size={16} />
             Add New Lead

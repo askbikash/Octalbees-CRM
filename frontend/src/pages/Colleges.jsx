@@ -102,7 +102,7 @@ const Colleges = () => {
         
         <button 
           onClick={() => { setEditingCollege(null); reset({}); setIsModalOpen(true); }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-orange-500/20 w-fit"
+          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 w-fit"
         >
           <Plus size={18} />
           Add College
@@ -172,7 +172,7 @@ const Colleges = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded-full bg-purple-50 dark:bg-orange-500/10 text-purple-700 dark:text-orange-400 text-xs font-bold border border-purple-100 dark:border-orange-500/20">
+                      <span className="px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-600/10 text-purple-700 dark:text-orange-400 text-xs font-bold border border-purple-100 dark:border-orange-500/20">
                         {college.type || 'COLLEGE'}
                       </span>
                     </td>
@@ -342,7 +342,7 @@ const Colleges = () => {
                 form="college-form"
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 dark:text-zinc-950 disabled:opacity-70 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-orange-500/25"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white disabled:opacity-70 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-purple-500/25"
               >
                 {isSubmitting && <Loader2 className="animate-spin" size={18} />}
                 {editingCollege ? 'Update College' : 'Save College'}
