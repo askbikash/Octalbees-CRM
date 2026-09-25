@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
-import { Mail, Lock, ArrowRight, Loader2, Sun, Moon, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Sun, Moon, Sparkles, TrendingUp, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
