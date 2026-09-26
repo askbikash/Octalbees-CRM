@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { login, getMe } = require('../controllers/auth.controller');
 const { forgotPassword, verifySecurity, verifyOTP, resetPassword } = require('../controllers/password.controller');
+const { sendOTPEmail } = require('../utils/email');
 const { authenticate } = require('../middleware/auth.middleware');
 
 const router = express.Router();
@@ -32,5 +33,14 @@ router.post('/forgot-password', resetLimiter, forgotPassword);
 router.post('/verify-security', resetLimiter, verifySecurity);
 router.post('/verify-otp', resetLimiter, verifyOTP);
 router.post('/reset-password', resetLimiter, resetPassword);
+
+router.get('/test-email', async (req, res) => {
+  try {
+    await sendOTPEmail(process.env.SMTP_EMAIL || 'test@example.com', '123456', 'Debug Test');
+    res.json({ success: true, message: 'Test email sent successfully' });
+  } catch (error) {
+    res.json({ success: false, error: error.message, stack: error.stack, code: error.code });
+  }
+});
 
 module.exports = router;
