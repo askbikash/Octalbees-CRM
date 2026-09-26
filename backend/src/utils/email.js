@@ -13,6 +13,7 @@ const createTransporter = () => {
     connectionTimeout: 5000, // 5 seconds
     greetingTimeout: 5000,
     socketTimeout: 5000,
+    family: 4, // Force IPv4 (fixes ENETUNREACH IPv6 error on Render)
     tls: {
       rejectUnauthorized: false
     }
