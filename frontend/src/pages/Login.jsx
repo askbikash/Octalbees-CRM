@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -283,6 +283,9 @@ const Login = () => {
                   <label className="block text-[13px] font-semibold text-slate-600 dark:text-zinc-400 tracking-wide uppercase">
                     Password
                   </label>
+                  <Link to="/forgot-password" className="text-[13px] font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
+                    Forgot password?
+                  </Link>
                 </div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-zinc-600 group-focus-within:text-purple-500 dark:group-focus-within:text-purple-400 transition-colors duration-300">

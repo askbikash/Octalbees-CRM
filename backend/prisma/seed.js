@@ -23,7 +23,9 @@ async function main() {
       email: adminEmail,
       password_hash,
       role: 'ADMIN',
-      phone: '9999999999'
+      phone: '9999999999',
+      security_question: process.env.ADMIN_SECURITY_QUESTION || 'What is your company name?',
+      security_answer: process.env.ADMIN_SECURITY_ANSWER || 'octalbees'
     }
   });
 

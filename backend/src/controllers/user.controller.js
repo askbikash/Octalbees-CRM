@@ -7,7 +7,9 @@ const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   role: z.enum(['ADMIN', 'BDE']).default('BDE'),
-  phone: z.string().optional()
+  phone: z.string().optional(),
+  security_question: z.string().optional(),
+  security_answer: z.string().optional()
 });
 
 const createUser = async (req, res) => {
@@ -31,7 +33,9 @@ const createUser = async (req, res) => {
         email: validatedData.email,
         password_hash,
         role: validatedData.role,
-        phone: validatedData.phone
+        phone: validatedData.phone,
+        security_question: validatedData.security_question || null,
+        security_answer: validatedData.security_answer || null
       },
       select: {
         id: true,
@@ -107,17 +111,21 @@ const updateUserStatus = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, security_question, security_answer } = req.body;
     const userId = req.user.id;
 
     if (!name) {
       return res.status(400).json({ success: false, message: 'Name is required' });
     }
 
+    const updateData = { name, phone: phone || null };
+    if (security_question !== undefined) updateData.security_question = security_question;
+    if (security_answer !== undefined) updateData.security_answer = security_answer;
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { name, phone: phone || null },
-      select: { id: true, name: true, email: true, role: true, phone: true, is_active: true }
+      data: updateData,
+      select: { id: true, name: true, email: true, role: true, phone: true, is_active: true, security_question: true }
     });
 
     res.status(200).json({ success: true, message: 'Profile updated', data: updatedUser });

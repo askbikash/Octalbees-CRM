@@ -98,6 +98,13 @@ model User {
   role          UserRole @default(BDE)
   phone         String?
   is_active     Boolean  @default(true)
+
+  // Security & Password Reset
+  security_question String?
+  security_answer   String?
+  reset_otp         String?
+  otp_expires_at    DateTime?
+
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

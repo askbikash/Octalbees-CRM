@@ -7,6 +7,7 @@ import { ToastProvider } from './context/ToastContext';
 // Layouts & Pages
 import DashboardLayout from './components/layout/DashboardLayout';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import LeadDetails from './pages/LeadDetails';
@@ -43,6 +44,7 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             
             {/* Protected Dashboard Routes */}
             <Route path="/" element={

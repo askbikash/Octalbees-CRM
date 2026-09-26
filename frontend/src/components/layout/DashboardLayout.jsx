@@ -128,8 +128,8 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="md:ml-64 flex flex-col min-h-screen">
-        <main className="flex-1 p-6 md:p-8 overflow-x-hidden">
+      <div className="md:ml-64 flex flex-col min-h-screen pt-16 md:pt-0">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-x-hidden">
           <div className="max-w-7xl mx-auto w-full">
             <Outlet />
           </div>
