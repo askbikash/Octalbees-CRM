@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { Users, CalendarDays, TrendingUp, AlertTriangle, Loader2, Download, Plus, Phone, Mail, Clock, CheckCircle2, ArrowRight, Sparkles, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -66,12 +67,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-500">
-        <Loader2 className="animate-spin mb-4 text-purple-500 dark:text-orange-500" size={32} />
-        <p className="font-medium text-lg">Loading Dashboard Data...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!stats) return null;
@@ -106,14 +102,14 @@ const Dashboard = () => {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Welcome back, {user?.name.split(' ')[0]} 👋
           </h1>
           <p className="text-slate-500 dark:text-zinc-400 mt-1">Here's what's happening with your leads today.</p>
         </div>
         <div className="flex items-center gap-3">
           {user.role === 'ADMIN' && (
-            <button 
+            <button
               onClick={handleExport}
               className="px-5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-sm flex items-center gap-2"
             >
@@ -121,7 +117,7 @@ const Dashboard = () => {
               Export Report
             </button>
           )}
-          <button 
+          <button
             onClick={() => navigate('/leads')}
             className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 flex items-center gap-2"
           >
@@ -133,34 +129,34 @@ const Dashboard = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard 
-          title="Total Leads" 
-          value={kpis.totalLeads} 
-          icon={Users} 
+        <StatCard
+          title="Total Leads"
+          value={kpis.totalLeads}
+          icon={Users}
         />
-        <StatCard 
-          title="Converted" 
-          value={kpis.convertedLeads} 
-          icon={TrendingUp} 
+        <StatCard
+          title="Converted"
+          value={kpis.convertedLeads}
+          icon={TrendingUp}
           accent="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-          trend={{ value: `${((kpis.convertedLeads / (kpis.totalLeads || 1)) * 100).toFixed(0)}%`, icon: TrendingUp, colorClass: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" }} 
+          trend={{ value: `${((kpis.convertedLeads / (kpis.totalLeads || 1)) * 100).toFixed(0)}%`, icon: TrendingUp, colorClass: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" }}
         />
-        <StatCard 
-          title="New This Week" 
-          value={kpis.newLeadsThisWeek} 
+        <StatCard
+          title="New This Week"
+          value={kpis.newLeadsThisWeek}
           icon={Sparkles}
           accent="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400"
         />
-        <StatCard 
-          title="Pending Follow-ups" 
-          value={kpis.pendingFollowUps} 
-          icon={CalendarDays} 
+        <StatCard
+          title="Pending Follow-ups"
+          value={kpis.pendingFollowUps}
+          icon={CalendarDays}
           accent="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
         />
-        <StatCard 
-          title="Overdue" 
-          value={kpis.overdueFollowUps} 
-          icon={AlertTriangle} 
+        <StatCard
+          title="Overdue"
+          value={kpis.overdueFollowUps}
+          icon={AlertTriangle}
           accent="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"
           trend={kpis.overdueFollowUps > 0 ? { value: "Action Needed", colorClass: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20" } : null}
         />
@@ -243,8 +239,8 @@ const Dashboard = () => {
               <BarChart data={charts.statusData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#888' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: '#888' }} axisLine={false} tickLine={false} />
-                <Tooltip 
-                  cursor={{ fill: 'transparent' }} 
+                <Tooltip
+                  cursor={{ fill: 'transparent' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '13px' }}
                 />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
@@ -256,7 +252,7 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </div>
         </div>
-        
+
         {/* Pie Chart: Leads by Source */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col h-[380px]">
           <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4">Lead Sources</h3>
@@ -277,7 +273,7 @@ const Dashboard = () => {
                     <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '13px' }}
                 />
                 <Legend verticalAlign="bottom" height={36} iconType="circle" />

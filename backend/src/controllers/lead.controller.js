@@ -526,13 +526,20 @@ const bulkActionLeads = async (req, res) => {
         const { sendBulkEmail } = require('../utils/email');
         await sendBulkEmail(emails, subject, message, req.user.name);
         
+        // 1. Log the email activities
         const activities = leads.map(l => ({
           lead_id: l.id,
           user_id: userId,
           type: 'EMAIL',
-          description: `Sent bulk email: ${subject}`
+          description: `Sent email: ${subject}`
         }));
         await prisma.activity.createMany({ data: activities });
+
+        // 2. Automate: Move leads in "NEW" status to "CONTACTED" automatically
+        await prisma.lead.updateMany({
+          where: { id: { in: leads.map(l => l.id) }, status: 'NEW' },
+          data: { status: 'CONTACTED' }
+        });
       }
       updatedCount = emails.length;
     } else {

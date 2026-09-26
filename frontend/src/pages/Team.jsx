@@ -3,6 +3,7 @@ import { Users, UserPlus, Loader2, Mail, Phone, Shield, ShieldCheck, X, Activity
 import { useForm } from 'react-hook-form';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { TableSkeleton } from '../components/ui/Skeleton';
 
 const Team = () => {
   const { user: currentUser } = useAuth();
@@ -130,9 +131,8 @@ const Team = () => {
             <tbody className="divide-y divide-slate-200 dark:divide-zinc-800/50 bg-white dark:bg-zinc-900">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-24 text-center text-slate-500">
-                    <Loader2 className="animate-spin mx-auto mb-3 text-purple-500 dark:text-orange-500" size={28} />
-                    <p className="font-medium">Loading team...</p>
+                  <td colSpan="5" className="p-0">
+                    <TableSkeleton columns={4} rows={5} />
                   </td>
                 </tr>
               ) : users.length === 0 ? (

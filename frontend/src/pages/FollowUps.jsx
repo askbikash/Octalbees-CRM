@@ -4,6 +4,7 @@ import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ListSkeleton } from '../components/ui/Skeleton';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -109,9 +110,8 @@ const FollowUps = () => {
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden p-6">
         
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-500 dark:text-zinc-400">
-            <Loader2 className="animate-spin text-purple-600 dark:text-orange-400 mb-4" size={32} />
-            <p>Loading your schedule...</p>
+          <div className="py-6 flex items-center justify-center">
+            <ListSkeleton />
           </div>
         ) : followUps.length === 0 ? (
           <div className="py-20 flex flex-col items-center justify-center text-slate-500 dark:text-zinc-400">

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Plus, Loader2, Calendar, Phone, Mail, X, AlertTriangle, Edit, Trash2, MoreHorizontal, Upload, FileText, Eye, ChevronDown, Download, MessageSquare, CheckSquare, List, LayoutGrid, Send } from 'lucide-react';
+import { Users, Search, Plus, Loader2, Calendar, Phone, Mail, X, AlertTriangle, Edit, Trash2, MoreHorizontal, Upload, FileText, Eye, ChevronDown, Download, MessageSquare, CheckSquare, List, LayoutGrid, Send, MessageCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import LeadKanbanBoard from '../components/leads/LeadKanbanBoard';
+import { TableSkeleton, KanbanSkeleton } from '../components/ui/Skeleton';
 
 const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
@@ -371,8 +372,7 @@ const Leads = () => {
         </div>
         
         <div className="flex gap-3">
-          {user.role === 'ADMIN' && (
-            <>
+          {user.role !== 'BDE' && (
               <button 
                 onClick={handleExport}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold transition-colors shadow-sm"
@@ -380,6 +380,9 @@ const Leads = () => {
                 <Download size={18} />
                 Export CSV
               </button>
+          )}
+          {user.role === 'ADMIN' && (
+            <>
               <button 
                 onClick={() => { setImportResult(null); setImportFile(null); setIsImportModalOpen(true); }}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold transition-colors shadow-sm"
@@ -464,8 +467,8 @@ const Leads = () => {
         {viewMode === 'kanban' ? (
           <div className="flex-1 overflow-hidden p-4 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px]">
             {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="animate-spin text-purple-500 dark:text-orange-500" size={32} />
+              <div className="h-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-xl">
+                <KanbanSkeleton />
               </div>
             ) : (
               <LeadKanbanBoard 
@@ -501,9 +504,8 @@ const Leads = () => {
             <tbody className="divide-y divide-slate-200 dark:divide-zinc-800/50 bg-white dark:bg-zinc-900">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-24 text-center text-slate-500">
-                    <Loader2 className="animate-spin mx-auto mb-3 text-purple-500 dark:text-orange-500" size={28} />
-                    <p className="font-medium">Loading pipeline...</p>
+                  <td colSpan="7" className="p-0">
+                    <TableSkeleton columns={7} rows={6} />
                   </td>
                 </tr>
               ) : leads.length === 0 ? (
@@ -538,6 +540,9 @@ const Leads = () => {
                         <div>
                           <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                             {lead.name}
+                            {(lead.status === 'NEGOTIATION' || lead.status === 'PROPOSAL') && (
+                              <span title="Hot Lead" className="text-orange-500 animate-pulse text-sm">🔥</span>
+                            )}
                             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-950 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">
                               {lead.lead_code}
                             </span>
@@ -548,12 +553,28 @@ const Leads = () => {
                     </td>
                     <td className="px-6 py-4 space-y-1">
                       {lead.phone && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-zinc-300">
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(lead.phone);
+                            toast.success('Phone copied!', { icon: '📋' });
+                          }}
+                          className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-zinc-300 hover:text-blue-500 dark:hover:text-blue-400 cursor-pointer transition-colors"
+                          title="Click to copy phone number"
+                        >
                           <Phone size={12} className="text-slate-400 dark:text-zinc-500" /> {lead.phone}
                         </div>
                       )}
                       {lead.email && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-zinc-300">
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(lead.email);
+                            toast.success('Email copied!', { icon: '📋' });
+                          }}
+                          className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-zinc-300 hover:text-blue-500 dark:hover:text-blue-400 cursor-pointer transition-colors"
+                          title="Click to copy email address"
+                        >
                           <Mail size={12} className="text-slate-400 dark:text-zinc-500" /> {lead.email}
                         </div>
                       )}
@@ -627,6 +648,19 @@ const Leads = () => {
                             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 dark:text-zinc-300 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 rounded-lg transition-colors text-left"
                           >
                             <MessageSquare size={14} /> Quick Note
+                          </button>
+                          <button 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              if(lead.phone) {
+                                window.open(`https://wa.me/${lead.phone.replace(/\D/g,'')}`, '_blank');
+                              } else {
+                                toast.error('No phone number available for this lead');
+                              }
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-green-600 hover:bg-green-50 dark:text-zinc-300 dark:hover:text-green-400 dark:hover:bg-green-500/10 rounded-lg transition-colors text-left"
+                          >
+                            <MessageCircle size={14} /> WhatsApp
                           </button>
                           <button 
                             onClick={(e) => { 
@@ -1187,6 +1221,25 @@ const Leads = () => {
               </button>
             </div>
             <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Load Template</label>
+                <select
+                  onChange={(e) => {
+                    const template = e.target.value;
+                    if(template === 'intro') {
+                      setEmailModal(prev => ({ ...prev, subject: 'Introduction from Octalbees CRM', message: 'Hi there,\n\nI noticed you recently showed interest in our services and wanted to reach out and introduce myself.\n\nLet me know if you are free for a quick 10-minute call this week to discuss how we can help your business grow.\n\nBest regards,' }));
+                    } else if (template === 'followup') {
+                      setEmailModal(prev => ({ ...prev, subject: 'Checking in - Octalbees CRM', message: 'Hi,\n\nI wanted to quickly circle back on my previous email. I know things can get busy!\n\nAre you still interested in exploring a partnership?\n\nLooking forward to hearing from you.' }));
+                    }
+                    e.target.value = '';
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 outline-none text-slate-900 dark:text-white cursor-pointer mb-4"
+                >
+                  <option value="">Select a template...</option>
+                  <option value="intro">Initial Outreach</option>
+                  <option value="followup">Quick Follow-up</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Subject</label>
                 <input

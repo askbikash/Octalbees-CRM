@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, CalendarDays, Building2, Settings, LogOut, Menu, X, Sun, Moon, Zap, Activity } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,7 +14,25 @@ const DashboardLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const location = useLocation();
+
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        navigate('/leads');
+        setTimeout(() => {
+          const searchInput = document.querySelector('input[placeholder="Search leads..."]');
+          if (searchInput) {
+            searchInput.focus();
+          }
+        }, 100);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -33,7 +51,7 @@ const DashboardLayout = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       
       {/* Mobile Navbar */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 sticky top-0 z-50">
+      <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 sticky top-0 z-30">
         <div>
           {isDarkMode ? (
             <img src="/Logo-white.png" alt="Octalbees" className="h-8 w-auto object-contain" />
@@ -41,22 +59,36 @@ const DashboardLayout = () => {
             <img src="/logo-black.png" alt="Octalbees" className="h-8 w-auto object-contain" />
           )}
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-slate-600 dark:text-slate-300">
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-600 dark:text-slate-300">
+          <Menu size={24} />
         </button>
       </div>
 
+      {/* Mobile Menu Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 dark:bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 transition-transform duration-300 ease-in-out md:translate-x-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 transition-transform duration-300 ease-in-out md:translate-x-0 flex flex-col shadow-2xl md:shadow-none",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="h-20 flex items-center px-6 border-b border-slate-200 dark:border-zinc-800 hidden md:flex">
+        <div className="h-16 md:h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-zinc-800">
           {isDarkMode ? (
-            <img src="/Logo-white.png" alt="Octalbees" className="h-10 w-auto object-contain" />
+            <img src="/Logo-white.png" alt="Octalbees" className="h-8 md:h-10 w-auto object-contain" />
           ) : (
-            <img src="/logo-black.png" alt="Octalbees" className="h-10 w-auto object-contain" />
+            <img src="/logo-black.png" alt="Octalbees" className="h-8 md:h-10 w-auto object-contain" />
           )}
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)} 
+            className="md:hidden text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-white p-2"
+          >
+            <X size={24} />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
@@ -128,7 +160,7 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="md:ml-64 flex flex-col min-h-screen pt-16 md:pt-0">
+      <div className="md:ml-72 flex flex-col min-h-screen">
         <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-x-hidden">
           <div className="max-w-7xl mx-auto w-full">
             <Outlet />

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../services/api';
+import LoadingScreen from '../components/ui/LoadingScreen';
 
 const AuthContext = createContext();
 
@@ -38,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-semibold">Loading Octalbees CRM...</div>;
+    return <LoadingScreen text="Loading Octalbees CRM..." />;
   }
 
   return (

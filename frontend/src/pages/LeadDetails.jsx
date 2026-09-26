@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Phone, Mail, Building2, Calendar, Clock, Activity, Flag, ChevronDown, CheckCircle2, AlertCircle, Briefcase, Send, Loader2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, Building2, Calendar, Clock, Activity, Flag, ChevronDown, CheckCircle2, AlertCircle, Briefcase, Send, Loader2, MessageCircle, Link } from 'lucide-react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { DetailSkeleton } from '../components/ui/Skeleton';
 
 const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
@@ -115,12 +116,7 @@ const LeadDetails = () => {
   };
 
   if (loading || !lead) {
-    return (
-      <div className="flex items-center justify-center h-64 text-slate-500 dark:text-zinc-400">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 dark:border-orange-400 mr-3"></div>
-        Loading lead details...
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   return (
@@ -155,7 +151,18 @@ const LeadDetails = () => {
         </div>
         
         <div className="flex flex-col items-end gap-2">
-          <div className="relative">
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('Link copied to clipboard!');
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-700 dark:text-zinc-300 font-semibold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-sm"
+            >
+              <Link size={16} />
+              Share Link
+            </button>
+            <div className="relative">
             <select
               value={lead.status}
               onChange={handleStatusChange}
@@ -191,6 +198,7 @@ const LeadDetails = () => {
             </select>
           </div>
         </div>
+      </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -3,6 +3,7 @@ import { Building2, Search, Plus, MapPin, Globe, Loader2, X, Edit, Trash2, MoreH
 import { useForm } from 'react-hook-form';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { TableSkeleton } from '../components/ui/Skeleton';
 
 const Colleges = () => {
   const { user } = useAuth();
@@ -141,9 +142,8 @@ const Colleges = () => {
             <tbody className="divide-y divide-slate-200 dark:divide-zinc-800/50 bg-white dark:bg-zinc-900">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-24 text-center text-slate-500">
-                    <Loader2 className="animate-spin mx-auto mb-3 text-purple-500 dark:text-orange-500" size={28} />
-                    <p className="font-medium">Loading colleges...</p>
+                  <td colSpan="6" className="p-0">
+                    <TableSkeleton columns={4} rows={5} />
                   </td>
                 </tr>
               ) : colleges.length === 0 ? (

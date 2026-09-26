@@ -4,6 +4,7 @@ import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
+import { TableSkeleton } from '../components/ui/Skeleton';
 import { twMerge } from 'tailwind-merge';
 
 function cn(...inputs) {
@@ -136,9 +137,8 @@ const AuditTrail = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-5 py-20 text-center">
-                    <Loader2 className="animate-spin mx-auto text-purple-600 dark:text-orange-400 mb-4" size={32} />
-                    <p className="text-slate-500 dark:text-zinc-400">Loading audit trail...</p>
+                  <td colSpan="5" className="p-0">
+                    <TableSkeleton columns={5} rows={6} />
                   </td>
                 </tr>
               ) : activities.length === 0 ? (
