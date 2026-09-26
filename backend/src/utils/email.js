@@ -84,4 +84,62 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-module.exports = { sendOTPEmail, generateOTP };
+/**
+ * Send bulk email to multiple recipients
+ */
+const sendBulkEmail = async (emails, subject, message, senderName) => {
+  if (process.env.NODE_ENV === 'production') {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://octalbees-crm.vercel.app';
+    const response = await fetch(`${frontendUrl}/api/send-bulk-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emails, subject, message, senderName })
+    });
+    
+    if (!response.ok) throw new Error('Vercel email proxy failed');
+    return;
+  }
+
+  const transporter = await createTransporter();
+  const emailList = Array.isArray(emails) ? emails : [emails];
+  const htmlContent = `
+<div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1f2937;">
+  
+  <!-- Body -->
+  <div style="font-size: 16px; line-height: 1.6; color: #374151; font-weight: 400;">
+    ${message.replace(/\n/g, '<br/>')}
+  </div>
+  
+  <!-- Footer -->
+  <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #6b7280; text-align: left;">
+    <p style="margin: 0 0 12px 0;">
+      This email was sent by <strong>${senderName || 'Octalbees CRM'}</strong>.
+    </p>
+    <p style="margin: 0 0 12px 0;">
+      <a href="mailto:info@octalbees.com" style="color: #2563eb; text-decoration: none;">Contact Support</a> &nbsp;&bull;&nbsp; 
+      <a href="https://octalbees.com" style="color: #2563eb; text-decoration: none;">octalbees.com</a>
+    </p>
+    <p style="margin: 0;">
+      &copy; ${new Date().getFullYear()} Octalbees CRM. All rights reserved.
+    </p>
+  </div>
+  
+</div>
+  `;
+
+  // Send individual emails so "To" is the lead's email
+  const sendPromises = emailList.map(email => {
+    return transporter.sendMail({
+      from: `"${senderName || 'Octalbees CRM'}" <${process.env.SMTP_EMAIL}>`,
+      to: email,
+      cc: 'info@octalbees.com',
+      bcc: process.env.SMTP_EMAIL, // This uses your configured SMTP email
+      subject: subject,
+      html: htmlContent,
+    });
+  });
+
+  await Promise.all(sendPromises);
+};
+
+module.exports = { sendOTPEmail, generateOTP, sendBulkEmail };

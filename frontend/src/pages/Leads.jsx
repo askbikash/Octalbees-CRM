@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Plus, Loader2, Calendar, Phone, Mail, X, AlertTriangle, Edit, Trash2, MoreHorizontal, Upload, FileText, Eye, ChevronDown, Download, MessageSquare, CheckSquare } from 'lucide-react';
+import { Users, Search, Plus, Loader2, Calendar, Phone, Mail, X, AlertTriangle, Edit, Trash2, MoreHorizontal, Upload, FileText, Eye, ChevronDown, Download, MessageSquare, CheckSquare, List, LayoutGrid, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import LeadKanbanBoard from '../components/leads/LeadKanbanBoard';
 
 const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
@@ -37,6 +38,7 @@ const Leads = () => {
   const [filterAssignee, setFilterAssignee] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'kanban'
   const toast = useToast();
 
   // Selection & Bulk Actions
@@ -47,6 +49,7 @@ const Leads = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteModal, setNoteModal] = useState({ open: false, leadId: null, note: '' });
   const [deleteModal, setDeleteModal] = useState({ open: false, type: null, data: null });
+  const [emailModal, setEmailModal] = useState({ open: false, subject: '', message: '' });
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -144,6 +147,11 @@ const Leads = () => {
       setDeleteModal({ open: true, type: 'bulk', data: null });
       return;
     }
+    
+    if (action === 'email') {
+      setEmailModal({ open: true, subject: '', message: '' });
+      return;
+    }
 
     try {
       setIsBulkActioning(true);
@@ -165,6 +173,17 @@ const Leads = () => {
       setNoteModal({ open: false, leadId: null, note: '' });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to add note');
+    }
+  };
+
+  const handleKanbanStatusChange = async (leadId, newStatus) => {
+    try {
+      await api.patch(`/leads/${leadId}/status`, { status: newStatus });
+      toast.success(`Lead moved to ${newStatus}`);
+      fetchLeads(); // refresh leads to reflect new state
+    } catch (error) {
+      toast.error('Failed to move lead');
+      console.error(error);
     }
   };
 
@@ -254,6 +273,29 @@ const Leads = () => {
       }
     }
     setDeleteModal({ open: false, type: null, data: null });
+  };
+
+  const submitBulkEmail = async () => {
+    if (!emailModal.subject.trim() || !emailModal.message.trim()) {
+      toast.error('Subject and message are required');
+      return;
+    }
+    try {
+      setIsBulkActioning(true);
+      await api.post('/leads/bulk', { 
+        leadIds: selectedLeads, 
+        action: 'email', 
+        value: { subject: emailModal.subject, message: emailModal.message } 
+      });
+      toast.success('Bulk emails sent successfully');
+      setEmailModal({ open: false, subject: '', message: '' });
+      setSelectedLeads([]);
+      fetchLeads();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send bulk email');
+    } finally {
+      setIsBulkActioning(false);
+    }
   };
 
   const handleQuickStatusChange = async (leadId, newStatus) => {
@@ -361,15 +403,37 @@ const Leads = () => {
         
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50 dark:bg-zinc-950/30 shrink-0">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by name, email, phone or OB-code..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 focus:border-purple-500 dark:focus:border-orange-500 outline-none text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-all"
-            />
+          <div className="flex items-center gap-3 w-full max-w-md">
+            {/* View Toggle */}
+            <div className="flex items-center bg-slate-200/50 dark:bg-zinc-800 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-zinc-700 shadow-sm text-slate-800 dark:text-zinc-100' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'}`}
+              >
+                <List size={18} />
+              </button>
+              <button
+                onClick={() => {
+                  setViewMode('kanban');
+                  setSearch(''); // Clear search for kanban
+                  setFilterAssignee(''); // Clear filters
+                  setFilterStatus('');
+                }}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'kanban' ? 'bg-white dark:bg-zinc-700 shadow-sm text-slate-800 dark:text-zinc-100' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'}`}
+              >
+                <LayoutGrid size={18} />
+              </button>
+            </div>
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search leads..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 focus:border-purple-500 dark:focus:border-orange-500 outline-none text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-all"
+              />
+            </div>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
             <select
@@ -396,9 +460,24 @@ const Leads = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-auto flex-1 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px]">
-          <table className="w-full text-left text-sm relative">
+        {/* Content Area (Kanban or Table) */}
+        {viewMode === 'kanban' ? (
+          <div className="flex-1 overflow-hidden p-4 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px]">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="animate-spin text-purple-500 dark:text-orange-500" size={32} />
+              </div>
+            ) : (
+              <LeadKanbanBoard 
+                leads={leads} 
+                onStatusChange={handleKanbanStatusChange} 
+                onLeadClick={(lead) => navigate(`/leads/${lead.id}`)}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="overflow-auto flex-1 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px]">
+            <table className="w-full text-left text-sm relative">
             <thead className="bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md text-slate-500 dark:text-zinc-400 sticky top-0 z-10 shadow-sm border-b border-slate-200 dark:border-zinc-800">
               <tr>
                 <th className="px-6 py-4 w-10">
@@ -550,6 +629,16 @@ const Leads = () => {
                             <MessageSquare size={14} /> Quick Note
                           </button>
                           <button 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setSelectedLeads([lead.id]);
+                              setEmailModal({ open: true, subject: '', message: '' }); 
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 dark:text-zinc-300 dark:hover:text-indigo-400 dark:hover:bg-indigo-500/10 rounded-lg transition-colors text-left"
+                          >
+                            <Mail size={14} /> Send Mail
+                          </button>
+                          <button 
                             onClick={(e) => { e.stopPropagation(); openEditModal(lead); }}
                             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-purple-600 hover:bg-purple-50 dark:text-zinc-300 dark:hover:text-orange-400 dark:hover:bg-orange-500/10 rounded-lg transition-colors text-left"
                           >
@@ -570,15 +659,42 @@ const Leads = () => {
             </tbody>
           </table>
         </div>
+        )}
+          {/* Pagination */}
+          {viewMode === 'list' && pagination.totalPages > 1 && (
+            <div className="p-4 border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between shrink-0">
+              <span className="text-sm text-slate-500 dark:text-zinc-400">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+              <div className="flex gap-2">
+                <button 
+                  disabled={pagination.page === 1}
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                  className="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm font-medium text-slate-700 dark:text-zinc-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Previous
+                </button>
+                <button 
+                  disabled={pagination.page === pagination.totalPages}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  className="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg text-sm font-medium text-slate-700 dark:text-zinc-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
-        {/* Table Footer */}
+      {/* Table Footer */}
+      {viewMode === 'list' && (
         <div className="p-4 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-950/50 flex justify-between items-center text-xs text-slate-500 dark:text-zinc-400 font-medium shrink-0 backdrop-blur-md">
           <span>Showing {leads.length} active leads</span>
           <span className="flex items-center gap-1.5 opacity-70">
             <Users size={14} className="text-purple-500 dark:text-orange-500" /> Pipeline Overview
           </span>
         </div>
-      </div>
+      )}
 
       {/* Add Lead Modal */}
       {isModalOpen && (
@@ -1019,16 +1135,27 @@ const Leads = () => {
                       <option key={u.id} value={u.id}>{u.name}</option>
                     ))}
                   </select>
-                  
-                  <button 
-                    onClick={() => handleBulkAction('delete')}
-                    disabled={isBulkActioning}
-                    className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 dark:text-red-600 dark:hover:text-red-700 dark:hover:bg-red-100 rounded-lg transition-colors"
-                    title="Delete Selected"
-                  >
-                    <Trash2 size={18} />
-                  </button>
                 </>
+              )}
+              
+              <button 
+                onClick={() => handleBulkAction('email')}
+                disabled={isBulkActioning}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-100 border border-slate-700 dark:border-slate-200 rounded-lg text-blue-400 dark:text-blue-600 font-medium hover:bg-slate-700 dark:hover:bg-slate-200 transition-colors disabled:opacity-50 shadow-sm"
+              >
+                <Mail size={16} />
+                <span>Email Leads</span>
+              </button>
+
+              {user?.role === 'ADMIN' && (
+                <button 
+                  onClick={() => handleBulkAction('delete')}
+                  disabled={isBulkActioning}
+                  className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 dark:text-red-600 dark:hover:text-red-700 dark:hover:bg-red-100 rounded-lg transition-colors"
+                  title="Delete Selected"
+                >
+                  <Trash2 size={18} />
+                </button>
               )}
               
               <button 
@@ -1042,6 +1169,65 @@ const Leads = () => {
           </div>
         </div>
       )}
+
+      {/* Bulk Email Modal */}
+      {emailModal.open && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-zinc-800">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Mail className="text-purple-600 dark:text-orange-500" />
+                Send Bulk Email
+              </h3>
+              <button 
+                onClick={() => setEmailModal({ open: false, subject: '', message: '' })}
+                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Subject</label>
+                <input
+                  type="text"
+                  value={emailModal.subject}
+                  onChange={(e) => setEmailModal(prev => ({ ...prev, subject: e.target.value }))}
+                  placeholder="e.g., Octalbees CRM Important Update"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 outline-none text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Message</label>
+                <textarea
+                  value={emailModal.message}
+                  onChange={(e) => setEmailModal(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Type your message here..."
+                  rows={6}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 outline-none text-slate-900 dark:text-white resize-none"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/30 flex justify-end gap-3">
+              <button
+                onClick={() => setEmailModal({ open: false, subject: '', message: '' })}
+                className="px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitBulkEmail}
+                disabled={isBulkActioning || !emailModal.subject.trim() || !emailModal.message.trim()}
+                className="px-5 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
+              >
+                {isBulkActioning ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+                Send to {selectedLeads.length} Leads
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
       {deleteModal.open && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

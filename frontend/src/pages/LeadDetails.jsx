@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Phone, Mail, Building2, Calendar, Clock, Activity, Flag, ChevronDown, CheckCircle2, AlertCircle, Briefcase, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, Building2, Calendar, Clock, Activity, Flag, ChevronDown, CheckCircle2, AlertCircle, Briefcase, Send, Loader2, MessageCircle } from 'lucide-react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const statusColors = {
   NEW: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
@@ -19,6 +20,7 @@ const statusColors = {
 const LeadDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
   const [noteText, setNoteText] = useState('');
@@ -207,7 +209,19 @@ const LeadDetails = () => {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Primary Phone</p>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{lead.phone || '-'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{lead.phone || '-'}</p>
+                    {lead.phone && (
+                      <a 
+                        href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${lead.name.split(' ')[0]}, this is ${user?.name?.split(' ')[0] || 'your agent'} from Octalbees...`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] px-2 py-0.5 rounded hover:bg-[#25D366]/20 transition-colors"
+                      >
+                        <MessageCircle size={12} /> WhatsApp
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
               

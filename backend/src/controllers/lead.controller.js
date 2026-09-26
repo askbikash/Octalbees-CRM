@@ -513,45 +513,69 @@ const bulkActionLeads = async (req, res) => {
 
     let updatedCount = 0;
     
-    await prisma.$transaction(async (tx) => {
-      if (action === 'delete') {
-        if (role !== 'ADMIN') throw new Error('Only admins can delete leads');
-        const result = await tx.lead.deleteMany({ where: { id: { in: leadIds } } });
-        updatedCount = result.count;
-      } else if (action === 'status') {
-        const result = await tx.lead.updateMany({
-          where: { id: { in: leadIds } },
-          data: { status: value }
-        });
-        updatedCount = result.count;
+    if (action === 'email') {
+      const { subject, message } = value;
+      const leads = await prisma.lead.findMany({ 
+        where: { id: { in: leadIds }, email: { not: null, not: '' } },
+        select: { id: true, email: true }
+      });
+      
+      const emails = leads.map(l => l.email);
+      
+      if (emails.length > 0) {
+        const { sendBulkEmail } = require('../utils/email');
+        await sendBulkEmail(emails, subject, message, req.user.name);
         
-        // Log activities
-        const activities = leadIds.map(id => ({
-          lead_id: id,
+        const activities = leads.map(l => ({
+          lead_id: l.id,
           user_id: userId,
-          type: 'STATUS_CHANGE',
-          description: `Bulk status changed to ${value}`
+          type: 'EMAIL',
+          description: `Sent bulk email: ${subject}`
         }));
-        await tx.activity.createMany({ data: activities });
-      } else if (action === 'assign') {
-        if (role !== 'ADMIN') throw new Error('Only admins can reassign leads');
-        const result = await tx.lead.updateMany({
-          where: { id: { in: leadIds } },
-          data: { assigned_to: value || null }
-        });
-        updatedCount = result.count;
-        
-        const activities = leadIds.map(id => ({
-          lead_id: id,
-          user_id: userId,
-          type: 'NOTE',
-          description: value ? `Bulk assigned to user ${value}` : 'Bulk unassigned'
-        }));
-        await tx.activity.createMany({ data: activities });
-      } else {
-        throw new Error('Invalid bulk action');
+        await prisma.activity.createMany({ data: activities });
       }
-    });
+      updatedCount = emails.length;
+    } else {
+      await prisma.$transaction(async (tx) => {
+        if (action === 'delete') {
+          if (role !== 'ADMIN') throw new Error('Only admins can delete leads');
+          const result = await tx.lead.deleteMany({ where: { id: { in: leadIds } } });
+          updatedCount = result.count;
+        } else if (action === 'status') {
+          const result = await tx.lead.updateMany({
+            where: { id: { in: leadIds } },
+            data: { status: value }
+          });
+          updatedCount = result.count;
+          
+          // Log activities
+          const activities = leadIds.map(id => ({
+            lead_id: id,
+            user_id: userId,
+            type: 'STATUS_CHANGE',
+            description: `Bulk status changed to ${value}`
+          }));
+          await tx.activity.createMany({ data: activities });
+        } else if (action === 'assign') {
+          if (role !== 'ADMIN') throw new Error('Only admins can reassign leads');
+          const result = await tx.lead.updateMany({
+            where: { id: { in: leadIds } },
+            data: { assigned_to: value || null }
+          });
+          updatedCount = result.count;
+          
+          const activities = leadIds.map(id => ({
+            lead_id: id,
+            user_id: userId,
+            type: 'NOTE',
+            description: value ? `Bulk assigned to user ${value}` : 'Bulk unassigned'
+          }));
+          await tx.activity.createMany({ data: activities });
+        } else {
+          throw new Error('Invalid bulk action');
+        }
+      });
+    }
 
     res.status(200).json({ success: true, message: `Successfully applied ${action} to ${updatedCount} leads` });
   } catch (error) {
