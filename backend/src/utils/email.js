@@ -1,19 +1,19 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns').promises;
 
 // Create reusable transporter using Gmail SMTP
-const createTransporter = () => {
+const createTransporter = async () => {
+  // Manually resolve IPv4 address because Render IPv6 fails
+  const lookup = await dns.lookup('smtp.gmail.com', { family: 4 });
+  
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: lookup.address, // Use explicit IPv4 address
     port: 587,
-    secure: false, // true for 465, false for other ports
+    secure: false, 
     auth: {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD, 
     },
-    connectionTimeout: 5000, // 5 seconds
-    greetingTimeout: 5000,
-    socketTimeout: 5000,
-    family: 4, // Force IPv4 (fixes ENETUNREACH IPv6 error on Render)
     tls: {
       rejectUnauthorized: false
     }
@@ -27,7 +27,7 @@ const createTransporter = () => {
  * @param {string} userName - User's name for personalization
  */
 const sendOTPEmail = async (to, otp, userName) => {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
 
   const mailOptions = {
     from: `"Octalbees CRM" <${process.env.SMTP_EMAIL}>`,
