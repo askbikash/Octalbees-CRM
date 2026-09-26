@@ -25,7 +25,6 @@ app.use(helmet());
 app.use(limiter); // Apply rate limiter to all requests
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://octalbees-crm.vercel.app',
   'https://crm.octalbees.com',
   process.env.FRONTEND_URL
 ].filter(Boolean);

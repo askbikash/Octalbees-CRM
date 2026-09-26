@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const bcrypt = require('bcrypt');
 const { z } = require('zod');
+const { sendWelcomeEmail } = require('../utils/email');
 
 const createUserSchema = z.object({
   name: z.string().min(2),
@@ -46,6 +47,13 @@ const createUser = async (req, res) => {
         created_at: true
       }
     });
+    // Send welcome email with credentials
+    try {
+      await sendWelcomeEmail(newUser.email, newUser.name, newUser.email, validatedData.password, newUser.role);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // We still return 201 since the user was created, but maybe log the error
+    }
 
     res.status(201).json({ success: true, message: 'User created successfully', data: newUser });
   } catch (error) {

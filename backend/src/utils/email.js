@@ -29,7 +29,7 @@ const createTransporter = async () => {
 const sendOTPEmail = async (to, otp, userName) => {
   // If in production on Render, use the Vercel Serverless Function to bypass Render's firewall
   if (process.env.NODE_ENV === 'production') {
-    const frontendUrl = process.env.FRONTEND_URL || 'https://octalbees-crm.vercel.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://crm.octalbees.com';
     const response = await fetch(`${frontendUrl}/api/send-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -89,7 +89,7 @@ const generateOTP = () => {
  */
 const sendBulkEmail = async (emails, subject, message, senderName) => {
   if (process.env.NODE_ENV === 'production') {
-    const frontendUrl = process.env.FRONTEND_URL || 'https://octalbees-crm.vercel.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://crm.octalbees.com';
     const response = await fetch(`${frontendUrl}/api/send-bulk-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -142,4 +142,54 @@ const sendBulkEmail = async (emails, subject, message, senderName) => {
   await Promise.all(sendPromises);
 };
 
-module.exports = { sendOTPEmail, generateOTP, sendBulkEmail };
+const sendWelcomeEmail = async (to, name, email, password, role) => {
+  if (process.env.NODE_ENV === 'production') {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://crm.octalbees.com';
+    const response = await fetch(`${frontendUrl}/api/send-welcome-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, name, email, password, role })
+    });
+    
+    if (!response.ok) throw new Error('Vercel email proxy failed');
+    return;
+  }
+
+  const transporter = await createTransporter();
+  const mailOptions = {
+    from: `"Octalbees CRM" <${process.env.SMTP_EMAIL}>`,
+    to,
+    subject: 'Welcome to Octalbees CRM - Your Account Credentials',
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 480px; margin: 0 auto; background: #0f0a1f; border-radius: 16px; overflow: hidden; border: 1px solid rgba(139, 92, 246, 0.2);">
+        <div style="padding: 40px 32px 24px; text-align: center; background: linear-gradient(135deg, #1e0a3c 0%, #2d1065 100%);">
+          <h1 style="color: #ffffff; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Octalbees CRM</h1>
+          <p style="color: #a78bfa; font-size: 14px; margin: 0;">Welcome to the Team!</p>
+        </div>
+        <div style="padding: 32px;">
+          <p style="color: #d1d5db; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+            Hi <strong style="color: #fff;">${name}</strong>,<br/>
+            An account has been created for you on Octalbees CRM as a <strong>${role}</strong>. Below are your login credentials.
+          </p>
+          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; margin: 0 0 24px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <p style="color: #9ca3af; font-size: 13px; margin: 0 0 4px;">Email</p>
+            <p style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 0 0 16px;">${email}</p>
+            <p style="color: #9ca3af; font-size: 13px; margin: 0 0 4px;">Temporary Password</p>
+            <p style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 0; font-family: monospace;">${password}</p>
+          </div>
+          <a href="https://crm.octalbees.com/" style="display: block; width: 100%; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #ffffff; text-decoration: none; padding: 14px 0; border-radius: 8px; font-weight: 600; margin: 0 0 24px;">Login to CRM</a>
+          <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin: 0;">
+            Please log in and change your password immediately for security reasons.
+          </p>
+        </div>
+        <div style="padding: 16px 32px; border-top: 1px solid rgba(139, 92, 246, 0.15); text-align: center;">
+          <p style="color: #6b7280; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} Octalbees · Enterprise CRM</p>
+        </div>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendOTPEmail, generateOTP, sendBulkEmail, sendWelcomeEmail };
