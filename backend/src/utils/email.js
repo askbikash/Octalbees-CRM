@@ -27,6 +27,22 @@ const createTransporter = async () => {
  * @param {string} userName - User's name for personalization
  */
 const sendOTPEmail = async (to, otp, userName) => {
+  // If in production on Render, use the Vercel Serverless Function to bypass Render's firewall
+  if (process.env.NODE_ENV === 'production') {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://octalbees-crm.vercel.app';
+    const response = await fetch(`${frontendUrl}/api/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, otp, userName })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Vercel email proxy failed');
+    }
+    return;
+  }
+
+  // Local fallback
   const transporter = await createTransporter();
 
   const mailOptions = {
