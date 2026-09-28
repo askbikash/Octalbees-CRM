@@ -6,32 +6,32 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { TableSkeleton } from '../components/ui/Skeleton';
 
-const Colleges = () => {
+const Organizations = () => {
   const { user } = useAuth();
-  const [colleges, setColleges] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [editingCollege, setEditingCollege] = useState(null);
+  const [editingOrganization, setEditingOrganization] = useState(null);
   
   const navigate = useNavigate();
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
 
   useEffect(() => {
-    fetchColleges();
+    fetchOrganizations();
   }, [search]);
 
-  const fetchColleges = async () => {
+  const fetchOrganizations = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/colleges?search=${search}`);
-      setColleges(res.data.data);
+      const res = await api.get(`/organizations?search=${search}`);
+      setOrganizations(res.data.data);
     } catch (error) {
-      console.error('Failed to fetch colleges', error);
+      console.error('Failed to fetch organizations', error);
     } finally {
       setLoading(false);
     }
@@ -46,21 +46,21 @@ const Colleges = () => {
       if (!payload.email) delete payload.email;
       if (!payload.phone) delete payload.phone;
 
-      if (editingCollege) {
-        await api.put(`/colleges/${editingCollege.id}`, payload);
+      if (editingOrganization) {
+        await api.put(`/organizations/${editingOrganization.id}`, payload);
       } else {
-        await api.post('/colleges', payload);
+        await api.post('/organizations', payload);
       }
       
       setIsModalOpen(false);
-      setEditingCollege(null);
+      setEditingOrganization(null);
       reset();
-      fetchColleges();
+      fetchOrganizations();
     } catch (error) {
       if (error.response?.data?.errors) {
         const fieldMap = {
-          name: 'College Name',
-          type: 'College Type',
+          name: 'Organization Name',
+          type: 'Organization Type',
           city: 'City',
           state: 'State',
           email: 'Email',
@@ -73,21 +73,21 @@ const Colleges = () => {
         const uniqueFields = [...new Set(invalidFields)];
         setSubmitError(`Please check the following fields: ${uniqueFields.join(', ')}`);
       } else {
-        setSubmitError(error.response?.data?.message || 'Failed to save college');
+        setSubmitError(error.response?.data?.message || 'Failed to save organization');
       }
     }
   };
 
-  const openEditModal = (college) => {
-    setEditingCollege(college);
+  const openEditModal = (organization) => {
+    setEditingOrganization(organization);
     reset({
-      name: college.name,
-      type: college.type || 'COLLEGE',
-      phone: college.phone || '',
-      email: college.email || '',
-      website: college.website || '',
-      city: college.city || '',
-      state: college.state || ''
+      name: organization.name,
+      type: organization.type || 'ORGANIZATION',
+      phone: organization.phone || '',
+      email: organization.email || '',
+      website: organization.website || '',
+      city: organization.city || '',
+      state: organization.state || ''
     });
     setIsModalOpen(true);
   };
@@ -97,10 +97,10 @@ const Colleges = () => {
       return;
     }
     try {
-      await api.delete(`/colleges/${id}`);
-      fetchColleges();
+      await api.delete(`/organizations/${id}`);
+      fetchOrganizations();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to delete college. Ensure it has no active leads.');
+      alert(error.response?.data?.message || 'Failed to delete organization. Ensure it has no active leads.');
     }
   };
 
@@ -110,17 +110,17 @@ const Colleges = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Building2 className="text-purple-600 dark:text-orange-400" />
-            College Database
+            Organization Database
           </h1>
-          <p className="text-slate-500 dark:text-zinc-400 mt-1 text-sm">Manage all university and college contacts</p>
+          <p className="text-slate-500 dark:text-zinc-400 mt-1 text-sm">Manage all university and organization contacts</p>
         </div>
         
         <button 
-          onClick={() => { setEditingCollege(null); reset({}); setIsModalOpen(true); }}
+          onClick={() => { setEditingOrganization(null); reset({}); setIsModalOpen(true); }}
           className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 w-fit"
         >
           <Plus size={18} />
-          Add College
+          Add Organization
         </button>
       </div>
 
@@ -132,7 +132,7 @@ const Colleges = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" size={18} />
             <input 
               type="text" 
-              placeholder="Search colleges by name..." 
+              placeholder="Search organizations by name..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 focus:border-purple-500 dark:focus:border-orange-500 outline-none text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-all"
@@ -145,7 +145,7 @@ const Colleges = () => {
           <table className="w-full text-left text-sm relative">
             <thead className="bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-md text-slate-500 dark:text-zinc-400 sticky top-0 z-10 shadow-sm border-b border-slate-200 dark:border-zinc-800">
               <tr>
-                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">College Name</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Organization Name</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Location</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Type</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Website</th>
@@ -160,43 +160,43 @@ const Colleges = () => {
                     <TableSkeleton columns={4} rows={5} />
                   </td>
                 </tr>
-              ) : colleges.length === 0 ? (
+              ) : organizations.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-24 text-center text-slate-500 dark:text-zinc-400">
                     <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Building2 className="text-slate-400" size={24} />
                     </div>
-                    <p className="font-medium">No colleges found in the database.</p>
+                    <p className="font-medium">No organizations found in the database.</p>
                   </td>
                 </tr>
               ) : (
-                colleges.map((college) => (
+                organizations.map((organization) => (
                   <tr 
-                    key={college.id} 
-                    onClick={() => navigate(`/colleges/${college.id}`)}
+                    key={organization.id} 
+                    onClick={() => navigate(`/organizations/${organization.id}`)}
                     className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer bg-white dark:bg-zinc-900"
                   >
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900 dark:text-white">{college.name}</div>
-                      <div className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{college.email || 'No email provided'}</div>
-                      {college.phone && (
-                        <div className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{college.phone}</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">{organization.name}</div>
+                      <div className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{organization.email || 'No email provided'}</div>
+                      {organization.phone && (
+                        <div className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{organization.phone}</div>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300">
                         <MapPin size={14} className="text-slate-400 dark:text-zinc-500" />
-                        {college.city || 'Unknown'}, {college.state || ''}
+                        {organization.city || 'Unknown'}, {organization.state || ''}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-600/10 text-purple-700 dark:text-orange-400 text-xs font-bold border border-purple-100 dark:border-orange-500/20">
-                        {college.type || 'COLLEGE'}
+                        {organization.type || 'ORGANIZATION'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {college.website ? (
-                        <a href={college.website} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-purple-600 dark:text-orange-400 hover:underline">
+                      {organization.website ? (
+                        <a href={organization.website} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-purple-600 dark:text-orange-400 hover:underline">
                           <Globe size={14} /> View Site
                         </a>
                       ) : (
@@ -204,10 +204,10 @@ const Colleges = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 text-slate-500 dark:text-zinc-400 text-xs font-medium">
-                      {new Date(college.created_at).toLocaleDateString()}
+                      {new Date(organization.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {(user.role === 'ADMIN' || college.created_by === user.id) && (
+                      {(user.role === 'ADMIN' || organization.created_by === user.id) && (
                         <div className="relative group/menu inline-block text-left">
                           <button 
                             onClick={(e) => e.stopPropagation()}
@@ -219,13 +219,13 @@ const Colleges = () => {
                           {/* Dropdown Menu */}
                           <div className="absolute right-0 mt-1 w-32 origin-top-right bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-10 flex flex-col p-1">
                             <button 
-                              onClick={(e) => { e.stopPropagation(); openEditModal(college); }}
+                              onClick={(e) => { e.stopPropagation(); openEditModal(organization); }}
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-purple-600 hover:bg-purple-50 dark:text-zinc-300 dark:hover:text-orange-400 dark:hover:bg-orange-500/10 rounded-lg transition-colors text-left"
                             >
                               <Edit size={14} /> Edit
                             </button>
                             <button 
-                              onClick={(e) => { e.stopPropagation(); handleDelete(college.id, college.name); }}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(organization.id, organization.name); }}
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 dark:text-zinc-300 dark:hover:text-red-400 dark:hover:bg-red-500/10 rounded-lg transition-colors text-left"
                             >
                               <Trash2 size={14} /> Delete
@@ -243,24 +243,24 @@ const Colleges = () => {
         
         {/* Table Footer */}
         <div className="p-4 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-950/50 flex justify-between items-center text-xs text-slate-500 dark:text-zinc-400 font-medium shrink-0 backdrop-blur-md">
-          <span>Showing {colleges.length} colleges</span>
+          <span>Showing {organizations.length} organizations</span>
           <span className="flex items-center gap-1.5 opacity-70">
-            <Building2 size={14} className="text-purple-500 dark:text-orange-500" /> College Database
+            <Building2 size={14} className="text-purple-500 dark:text-orange-500" /> Organization Database
           </span>
         </div>
       </div>
 
-      {/* Add College Modal */}
+      {/* Add Organization Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
             
             <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                {editingCollege ? 'Edit College' : 'Add New College'}
+                {editingOrganization ? 'Edit Organization' : 'Add New Organization'}
               </h2>
               <button 
-                onClick={() => { setIsModalOpen(false); setEditingCollege(null); reset({}); setSubmitError(''); }}
+                onClick={() => { setIsModalOpen(false); setEditingOrganization(null); reset({}); setSubmitError(''); }}
                 className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors"
               >
                 <X size={20} />
@@ -274,13 +274,13 @@ const Colleges = () => {
                 </div>
               )}
 
-              <form id="college-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <form id="organization-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">College Name *</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Organization Name *</label>
                   <input 
-                    {...register('name', { required: 'College name is required' })}
+                    {...register('name', { required: 'Organization name is required' })}
                     className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 text-slate-900 dark:text-white outline-none transition-all"
-                    placeholder="e.g. ABC Engineering College"
+                    placeholder="e.g. ABC Engineering Organization"
                   />
                   {errors.name && <p className="mt-1 text-xs text-red-500 font-medium">{errors.name.message}</p>}
                 </div>
@@ -292,7 +292,7 @@ const Colleges = () => {
                       {...register('type')}
                       className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 text-slate-900 dark:text-white outline-none transition-all"
                     >
-                      <option value="COLLEGE">College</option>
+                      <option value="ORGANIZATION">Organization</option>
                       <option value="UNIVERSITY">University</option>
                       <option value="INSTITUTE">Institute</option>
                       <option value="TRAINING_INSTITUTE">Training Institute</option>
@@ -316,7 +316,7 @@ const Colleges = () => {
                       type="email"
                       {...register('email')}
                       className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 text-slate-900 dark:text-white outline-none transition-all"
-                      placeholder="e.g. info@college.edu"
+                      placeholder="e.g. info@organization.edu"
                     />
                   </div>
                   <div>
@@ -351,19 +351,19 @@ const Colleges = () => {
 
             <div className="p-6 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30 flex justify-end gap-3">
               <button 
-                onClick={() => { setIsModalOpen(false); setEditingCollege(null); reset({}); }}
+                onClick={() => { setIsModalOpen(false); setEditingOrganization(null); reset({}); }}
                 className="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>
               <button 
-                form="college-form"
+                form="organization-form"
                 type="submit"
                 disabled={isSubmitting}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white disabled:opacity-70 transition-colors shadow-sm shadow-purple-500/25 dark:shadow-purple-500/25"
               >
                 {isSubmitting && <Loader2 className="animate-spin" size={18} />}
-                {editingCollege ? 'Update College' : 'Save College'}
+                {editingOrganization ? 'Update Organization' : 'Save Organization'}
               </button>
             </div>
 
@@ -375,4 +375,4 @@ const Colleges = () => {
   );
 };
 
-export default Colleges;
+export default Organizations;

@@ -424,7 +424,7 @@ const FollowUps = () => {
 
                   <div className="mb-4">
                     <h3 className="font-bold text-slate-900 dark:text-white truncate">{task.lead.name}</h3>
-                    <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{task.lead.college?.name || 'No College'}</p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{task.lead.organization?.name || 'No Organization'}</p>
                     
                     <div className="mt-3 space-y-1">
                       {task.lead.phone && <p className="text-xs font-mono text-slate-600 dark:text-zinc-300">📞 {task.lead.phone}</p>}

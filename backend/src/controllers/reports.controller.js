@@ -101,35 +101,35 @@ const getReports = async (req, res) => {
       weeklyTrends.push({ week: label, leads: count, converted });
     }
 
-    // 5. College-wise Stats (top 15)
-    const collegeStats = await prisma.lead.groupBy({
-      by: ['college_id'],
-      where: { ...leadWhere, college_id: { not: null } },
-      _count: { college_id: true }
+    // 5. Organization-wise Stats (top 15)
+    const organizationStats = await prisma.lead.groupBy({
+      by: ['organization_id'],
+      where: { ...leadWhere, organization_id: { not: null } },
+      _count: { organization_id: true }
     });
-    const collegeIds = collegeStats.map(c => c.college_id);
-    const colleges = await prisma.college.findMany({
-      where: { id: { in: collegeIds } },
+    const organizationIds = organizationStats.map(c => c.organization_id);
+    const organizations = await prisma.organization.findMany({
+      where: { id: { in: organizationIds } },
       select: { id: true, name: true, city: true }
     });
-    const collegeMap = Object.fromEntries(colleges.map(c => [c.id, c]));
+    const organizationMap = Object.fromEntries(organizations.map(c => [c.id, c]));
 
-    const collegeData = await Promise.all(
-      collegeStats.map(async (cs) => {
+    const organizationData = await Promise.all(
+      organizationStats.map(async (cs) => {
         const converted = await prisma.lead.count({
-          where: { ...leadWhere, college_id: cs.college_id, status: 'CONVERTED' }
+          where: { ...leadWhere, organization_id: cs.organization_id, status: 'CONVERTED' }
         });
-        const college = collegeMap[cs.college_id];
+        const organization = organizationMap[cs.organization_id];
         return {
-          collegeName: college?.name || 'Unknown',
-          city: college?.city || '',
-          totalLeads: cs._count.college_id,
+          organizationName: organization?.name || 'Unknown',
+          city: organization?.city || '',
+          totalLeads: cs._count.organization_id,
           converted,
-          conversionRate: cs._count.college_id > 0 ? Math.round((converted / cs._count.college_id) * 100) : 0
+          conversionRate: cs._count.organization_id > 0 ? Math.round((converted / cs._count.organization_id) * 100) : 0
         };
       })
     );
-    collegeData.sort((a, b) => b.totalLeads - a.totalLeads);
+    organizationData.sort((a, b) => b.totalLeads - a.totalLeads);
 
     // 6. Monthly Trends (last 6 months)
     const monthlyTrends = [];
@@ -169,7 +169,7 @@ const getReports = async (req, res) => {
         sourceEffectiveness,
         weeklyTrends,
         monthlyTrends,
-        collegeData: collegeData.slice(0, 15)
+        organizationData: organizationData.slice(0, 15)
       }
     });
   } catch (error) {

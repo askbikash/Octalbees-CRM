@@ -17,14 +17,14 @@ const generateLeadCode = async () => {
 
 const leadSchema = z.object({
   name: z.string().min(2),
-  lead_type: z.enum(['STUDENT', 'COLLEGE', 'TPO', 'COLLEGE_CONTACT', 'STUDENT_CLUB', 'TRAINING_PARTNER', 'OTHER']).default('STUDENT'),
+  lead_type: z.enum(['STUDENT', 'ORGANIZATION', 'TPO', 'ORGANIZATION_CONTACT', 'STUDENT_CLUB', 'TRAINING_PARTNER', 'OTHER']).default('STUDENT'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().min(10).optional().or(z.literal('')),
   alternate_phone: z.string().optional().or(z.literal('')),
-  college_id: z.string().uuid().optional().or(z.literal('')),
+  organization_id: z.string().uuid().optional().or(z.literal('')),
   designation: z.string().optional(),
   city: z.string().optional(),
-  source: z.enum(['WEBSITE', 'INSTAGRAM', 'LINKEDIN', 'WHATSAPP', 'COLLEGE_OUTREACH', 'STUDENT_COMMUNITY', 'REFERRAL', 'GOOGLE', 'ADVERTISEMENT', 'EVENT', 'OTHER']).default('OTHER'),
+  source: z.enum(['WEBSITE', 'INSTAGRAM', 'LINKEDIN', 'WHATSAPP', 'ORGANIZATION_OUTREACH', 'STUDENT_COMMUNITY', 'REFERRAL', 'GOOGLE', 'ADVERTISEMENT', 'EVENT', 'OTHER']).default('OTHER'),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'HOT']).default('MEDIUM'),
   assigned_to: z.string().uuid().optional(),
   notes: z.string().optional(),
@@ -37,7 +37,7 @@ const createLead = async (req, res) => {
     const { force, ...leadData } = validatedData;
     
     // Convert empty strings to null for optional relations
-    if (leadData.college_id === '') leadData.college_id = null;
+    if (leadData.organization_id === '') leadData.organization_id = null;
     if (leadData.email === '') leadData.email = null;
     if (leadData.phone === '') leadData.phone = null;
     if (leadData.alternate_phone === '') leadData.alternate_phone = null;
@@ -47,17 +47,17 @@ const createLead = async (req, res) => {
       const orConditions = [];
       if (leadData.phone) orConditions.push({ phone: leadData.phone });
       if (leadData.email) orConditions.push({ email: leadData.email });
-      if (leadData.name && leadData.college_id) {
+      if (leadData.name && leadData.organization_id) {
         orConditions.push({
           name: leadData.name,
-          college_id: leadData.college_id
+          organization_id: leadData.organization_id
         });
       }
 
       if (orConditions.length > 0) {
         const potentialDuplicates = await prisma.lead.findMany({
           where: { OR: orConditions },
-          include: { assigned_user: { select: { name: true } }, college: { select: { name: true } } }
+          include: { assigned_user: { select: { name: true } }, organization: { select: { name: true } } }
         });
 
         if (potentialDuplicates.length > 0) {
@@ -132,7 +132,7 @@ const getLeads = async (req, res) => {
         orderBy: { created_at: 'desc' },
         include: {
           assigned_user: { select: { name: true } },
-          college: { select: { name: true } }
+          organization: { select: { name: true } }
         }
       }),
       prisma.lead.count({ where })
@@ -161,7 +161,7 @@ const getLeadById = async (req, res) => {
     const lead = await prisma.lead.findUnique({
       where: { id },
       include: {
-        college: true,
+        organization: true,
         assigned_user: { select: { id: true, name: true, email: true } },
         creator: { select: { id: true, name: true } },
         activities: { 
@@ -260,7 +260,7 @@ const updateLead = async (req, res) => {
     const validatedData = leadSchema.partial().parse(req.body);
     
     // Clean up empty strings
-    if (validatedData.college_id === '') validatedData.college_id = null;
+    if (validatedData.organization_id === '') validatedData.organization_id = null;
     if (validatedData.email === '') validatedData.email = null;
     if (validatedData.phone === '') validatedData.phone = null;
     if (validatedData.alternate_phone === '') validatedData.alternate_phone = null;
@@ -421,12 +421,12 @@ const exportLeads = async (req, res) => {
       orderBy: { created_at: 'desc' },
       include: {
         assigned_user: { select: { name: true } },
-        college: { select: { name: true } }
+        organization: { select: { name: true } }
       }
     });
 
     // Generate CSV String
-    let csv = 'Lead Code,Name,Email,Phone,Designation,Status,Source,Type,Priority,Assigned To,College,Created At\n';
+    let csv = 'Lead Code,Name,Email,Phone,Designation,Status,Source,Type,Priority,Assigned To,Organization,Created At\n';
     
     leads.forEach(lead => {
       const row = [
@@ -440,7 +440,7 @@ const exportLeads = async (req, res) => {
         `"${lead.lead_type}"`,
         `"${lead.priority}"`,
         `"${lead.assigned_user?.name || 'Unassigned'}"`,
-        `"${lead.college?.name || 'None'}"`,
+        `"${lead.organization?.name || 'None'}"`,
         `"${new Date(lead.created_at).toISOString()}"`
       ];
       csv += row.join(',') + '\n';

@@ -46,7 +46,7 @@ app.use(morgan('dev'));
 // Routes
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
-const collegeRoutes = require('./routes/college.routes');
+const organizationRoutes = require('./routes/organization.routes');
 const leadRoutes = require('./routes/lead.routes');
 const followupRoutes = require('./routes/followup.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
@@ -56,7 +56,7 @@ const notificationRoutes = require('./routes/notification.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/colleges', collegeRoutes);
+app.use('/api/organizations', organizationRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/followups', followupRoutes);
 app.use('/api/dashboard', dashboardRoutes);

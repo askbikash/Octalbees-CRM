@@ -31,7 +31,7 @@ const Leads = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
-  const [colleges, setColleges] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -77,7 +77,7 @@ const Leads = () => {
 
   useEffect(() => {
     fetchLeads();
-    fetchColleges(); // For the dropdown
+    fetchOrganizations(); // For the dropdown
     fetchUsers(); // For assignment
   }, [search, filterStatus, filterAssignee, currentPage]);
 
@@ -212,7 +212,7 @@ const Leads = () => {
         const replacements = {
           '{{student_name}}': lead.name,
           '{{placement_officer_name}}': lead.name,
-          '{{college_name}}': lead.college?.name || '',
+          '{{organization_name}}': lead.organization?.name || '',
           '{{program_name}}': '',
           '{{duration}}': '',
           '{{mode}}': '',
@@ -254,7 +254,7 @@ const Leads = () => {
         const replacements = {
           '{{student_name}}': lead.name,
           '{{placement_officer_name}}': lead.name,
-          '{{college_name}}': lead.college?.name || '',
+          '{{organization_name}}': lead.organization?.name || '',
         };
         Object.entries(replacements).forEach(([key, value]) => {
           body = body.replaceAll(key, value);
@@ -280,12 +280,12 @@ const Leads = () => {
     if (failed > 0) toast.error(`Failed to send to ${failed} lead${failed > 1 ? 's' : ''}`);
   };
 
-  const fetchColleges = async () => {
+  const fetchOrganizations = async () => {
     try {
-      const res = await api.get(`/colleges?limit=100`);
-      setColleges(res.data.data);
+      const res = await api.get(`/organizations?limit=100`);
+      setOrganizations(res.data.data);
     } catch (error) {
-      console.error('Failed to fetch colleges for dropdown', error);
+      console.error('Failed to fetch organizations for dropdown', error);
     }
   };
 
@@ -299,7 +299,7 @@ const Leads = () => {
       // Clean up empty optional fields
       if (!payload.email) delete payload.email;
       if (!payload.phone) delete payload.phone;
-      if (!payload.college_id) delete payload.college_id;
+      if (!payload.organization_id) delete payload.organization_id;
 
       if (editingLead) {
         await api.put(`/leads/${editingLead.id}`, payload);
@@ -320,7 +320,7 @@ const Leads = () => {
           email: 'Email Address',
           phone: 'Phone Number',
           designation: 'Designation',
-          college_id: 'College',
+          organization_id: 'Organization',
           lead_type: 'Lead Type',
           source: 'Source',
           priority: 'Priority',
@@ -349,7 +349,7 @@ const Leads = () => {
       lead_type: lead.lead_type || 'STUDENT',
       source: lead.source || 'OTHER',
       priority: lead.priority || 'MEDIUM',
-      college_id: lead.college_id || '',
+      organization_id: lead.organization_id || '',
       assigned_to: lead.assigned_to || ''
     });
     setDuplicateWarning(null);
@@ -656,7 +656,7 @@ const Leads = () => {
                               {lead.lead_code}
                             </span>
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{lead.college?.name || lead.source}</div>
+                          <div className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{lead.organization?.name || lead.source}</div>
                         </div>
                       </div>
                     </td>
@@ -952,18 +952,18 @@ const Leads = () => {
                       <option value="INSTAGRAM">Instagram</option>
                       <option value="LINKEDIN">LinkedIn</option>
                       <option value="REFERRAL">Referral</option>
-                      <option value="COLLEGE_OUTREACH">College Outreach</option>
+                      <option value="ORGANIZATION_OUTREACH">Organization Outreach</option>
                       <option value="OTHER">Other</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Associated College</label>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Associated Organization</label>
                     <select 
-                      {...register('college_id')}
+                      {...register('organization_id')}
                       className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-orange-500/20 text-slate-900 dark:text-white outline-none transition-all"
                     >
                       <option value="">-- None / Independent --</option>
-                      {colleges.map(c => (
+                      {organizations.map(c => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>

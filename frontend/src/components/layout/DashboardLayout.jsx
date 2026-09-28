@@ -40,7 +40,7 @@ const DashboardLayout = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Leads', path: '/leads', icon: Users },
     { name: 'Follow-ups', path: '/followups', icon: CalendarDays },
-    { name: 'Colleges', path: '/colleges', icon: Building2 },
+    { name: 'Organizations', path: '/organizations', icon: Building2 },
     { name: 'Templates', path: '/templates', icon: FileText },
     { name: 'Email Logs', path: '/emails', icon: Mail },
   ];

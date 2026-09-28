@@ -159,7 +159,7 @@ const LeadDetails = () => {
               </h1>
               <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
                 {lead.designation ? `${lead.designation} at ` : ''} 
-                {lead.college?.name || lead.source}
+                {lead.organization?.name || lead.source}
               </p>
             </div>
           </div>
@@ -287,8 +287,8 @@ const LeadDetails = () => {
                   <Building2 size={14} />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">College / Institute</p>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{lead.college?.name || 'N/A'}</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">Organization / Institute</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{lead.organization?.name || 'N/A'}</p>
                   {lead.city && <p className="text-xs text-slate-500 dark:text-zinc-400">{lead.city}</p>}
                 </div>
               </div>

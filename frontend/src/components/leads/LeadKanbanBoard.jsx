@@ -107,9 +107,9 @@ const LeadKanbanBoard = ({ leads, onStatusChange, onLeadClick }) => {
                   </button>
                 </div>
                 
-                {lead.college && (
+                {lead.organization && (
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-3 line-clamp-1">
-                    {lead.college.name}
+                    {lead.organization.name}
                   </p>
                 )}
 

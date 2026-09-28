@@ -11,8 +11,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import LeadDetails from './pages/LeadDetails';
-import Colleges from './pages/Colleges';
-import CollegeDetails from './pages/CollegeDetails';
+import Organizations from './pages/Organizations';
+import OrganizationDetails from './pages/OrganizationDetails';
 import FollowUps from './pages/FollowUps';
 import Team from './pages/Team';
 import Settings from './pages/Settings';
@@ -59,8 +59,8 @@ const App = () => {
               <Route index element={<Dashboard />} />
               <Route path="leads" element={<Leads />} />
               <Route path="leads/:id" element={<LeadDetails />} />
-              <Route path="colleges" element={<Colleges />} />
-              <Route path="colleges/:id" element={<CollegeDetails />} />
+              <Route path="organizations" element={<Organizations />} />
+              <Route path="organizations/:id" element={<OrganizationDetails />} />
               <Route path="followups" element={<FollowUps />} />
               <Route path="users" element={<Team />} />
               <Route path="audit" element={<AuditTrail />} />

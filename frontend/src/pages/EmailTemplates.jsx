@@ -337,7 +337,7 @@ const EmailTemplates = () => {
                     value={formData.variables}
                     onChange={(e) => setFormData(f => ({ ...f, variables: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 text-slate-900 dark:text-white outline-none transition-all font-mono text-xs"
-                    placeholder="student_name,college_name,duration"
+                    placeholder="student_name,organization_name,duration"
                   />
                 </div>
               </div>

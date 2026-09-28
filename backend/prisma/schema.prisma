@@ -17,7 +17,7 @@ enum LeadSource {
   INSTAGRAM
   LINKEDIN
   WHATSAPP
-  COLLEGE_OUTREACH
+  ORGANIZATION_OUTREACH
   STUDENT_COMMUNITY
   REFERRAL
   GOOGLE
@@ -28,9 +28,9 @@ enum LeadSource {
 
 enum LeadType {
   STUDENT
-  COLLEGE
+  ORGANIZATION
   TPO
-  COLLEGE_CONTACT
+  ORGANIZATION_CONTACT
   STUDENT_CLUB
   TRAINING_PARTNER
   OTHER
@@ -55,8 +55,8 @@ enum LeadPriority {
   HOT
 }
 
-enum CollegeType {
-  COLLEGE
+enum OrganizationType {
+  ORGANIZATION
   UNIVERSITY
   INSTITUTE
   TRAINING_INSTITUTE
@@ -120,7 +120,7 @@ model User {
   activities             Activity[]
   assigned_follow_ups    FollowUp[]          @relation("AssignedFollowUps")
   created_follow_ups     FollowUp[]          @relation("CreatedFollowUps")
-  created_colleges       College[]           @relation("CreatedColleges")
+  created_organizations       Organization[]           @relation("CreatedOrganizations")
   status_history_changes LeadStatusHistory[]
   imports                Import[]
   email_templates        EmailTemplate[]
@@ -130,7 +130,7 @@ model User {
   @@map("users")
 }
 
-model College {
+model Organization {
   id         String       @id @default(uuid())
   name       String
   city       String?
@@ -139,7 +139,7 @@ model College {
   email      String?
   phone      String?
   address    String?
-  type       CollegeType?
+  type       OrganizationType?
   notes      String?
   created_by String?
   created_at DateTime     @default(now())
@@ -147,10 +147,10 @@ model College {
 
   // Relationships
   leads   Lead[]
-  creator  User?            @relation("CreatedColleges", fields: [created_by], references: [id])
-  contacts CollegeContact[]
+  creator  User?            @relation("CreatedOrganizations", fields: [created_by], references: [id])
+  contacts OrganizationContact[]
 
-  @@map("colleges")
+  @@map("organizations")
 }
 
 model Lead {
@@ -161,7 +161,7 @@ model Lead {
   email           String?
   phone           String?
   alternate_phone String?
-  college_id      String?
+  organization_id      String?
   designation     String?
   city            String?
   source          LeadSource   @default(OTHER)
@@ -182,7 +182,7 @@ model Lead {
   // Relationships
   assigned_user  User?               @relation("AssignedLeads", fields: [assigned_to], references: [id])
   creator        User?               @relation("CreatedLeads", fields: [created_by], references: [id])
-  college        College?            @relation(fields: [college_id], references: [id])
+  organization        Organization?            @relation(fields: [organization_id], references: [id])
   follow_ups     FollowUp[]
   activities     Activity[]
   status_history LeadStatusHistory[]
@@ -196,7 +196,7 @@ model Lead {
   @@index([assigned_to])
   @@index([next_follow_up_at])
   @@index([created_at])
-  @@index([college_id])
+  @@index([organization_id])
   @@map("leads")
 }
 
@@ -323,9 +323,9 @@ model Notification {
   @@map("notifications")
 }
 
-model CollegeContact {
+model OrganizationContact {
   id          String   @id @default(uuid())
-  college_id  String
+  organization_id  String
   name        String
   designation String?  // TPO, Dean, HOD, etc.
   email       String?
@@ -334,9 +334,9 @@ model CollegeContact {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  college College @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
   
-  @@map("college_contacts")
+  @@map("organization_contacts")
 }
 
 model EmailLog {

@@ -1,7 +1,7 @@
 const prisma = require('../config/prisma');
 const { z } = require('zod');
 
-const collegeSchema = z.object({
+const organizationSchema = z.object({
   name: z.string().min(2),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -9,20 +9,20 @@ const collegeSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
-  type: z.enum(['COLLEGE', 'UNIVERSITY', 'INSTITUTE', 'TRAINING_INSTITUTE', 'OTHER']).optional(),
+  type: z.enum(['ORGANIZATION', 'UNIVERSITY', 'INSTITUTE', 'TRAINING_INSTITUTE', 'OTHER']).optional(),
   notes: z.string().optional()
 });
 
-const createCollege = async (req, res) => {
+const createOrganization = async (req, res) => {
   try {
-    const validatedData = collegeSchema.parse(req.body);
-    const college = await prisma.college.create({
+    const validatedData = organizationSchema.parse(req.body);
+    const organization = await prisma.organization.create({
       data: {
         ...validatedData,
         created_by: req.user.id
       }
     });
-    res.status(201).json({ success: true, message: 'College created successfully', data: college });
+    res.status(201).json({ success: true, message: 'Organization created successfully', data: organization });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
@@ -32,7 +32,7 @@ const createCollege = async (req, res) => {
   }
 };
 
-const getColleges = async (req, res) => {
+const getOrganizations = async (req, res) => {
   try {
     const { page = 1, limit = 20, search = '' } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -44,19 +44,19 @@ const getColleges = async (req, res) => {
       }
     } : {};
 
-    const [colleges, total] = await Promise.all([
-      prisma.college.findMany({
+    const [organizations, total] = await Promise.all([
+      prisma.organization.findMany({
         where,
         skip,
         take: Number(limit),
         orderBy: { created_at: 'desc' }
       }),
-      prisma.college.count({ where })
+      prisma.organization.count({ where })
     ]);
 
     res.status(200).json({
       success: true,
-      data: colleges,
+      data: organizations,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -70,47 +70,47 @@ const getColleges = async (req, res) => {
   }
 };
 
-const getCollegeById = async (req, res) => {
+const getOrganizationById = async (req, res) => {
   try {
     const { id } = req.params;
-    const college = await prisma.college.findUnique({
+    const organization = await prisma.organization.findUnique({
       where: { id },
-      include: { leads: true } // V1 includes leads linked to this college
+      include: { leads: true } // V1 includes leads linked to this organization
     });
 
-    if (!college) {
-      return res.status(404).json({ success: false, message: 'College not found' });
+    if (!organization) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
     }
 
-    res.status(200).json({ success: true, data: college });
+    res.status(200).json({ success: true, data: organization });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-const updateCollege = async (req, res) => {
+const updateOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     
     // Check permissions
-    const existingCollege = await prisma.college.findUnique({ where: { id } });
-    if (!existingCollege) {
-      return res.status(404).json({ success: false, message: 'College not found' });
+    const existingOrganization = await prisma.organization.findUnique({ where: { id } });
+    if (!existingOrganization) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
     }
     
-    if (req.user.role !== 'ADMIN' && existingCollege.created_by !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Access denied: You can only edit colleges you created.' });
+    if (req.user.role !== 'ADMIN' && existingOrganization.created_by !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied: You can only edit organizations you created.' });
     }
 
-    const validatedData = collegeSchema.partial().parse(req.body);
+    const validatedData = organizationSchema.partial().parse(req.body);
 
-    const college = await prisma.college.update({
+    const organization = await prisma.organization.update({
       where: { id },
       data: validatedData
     });
 
-    res.status(200).json({ success: true, message: 'College updated successfully', data: college });
+    res.status(200).json({ success: true, message: 'Organization updated successfully', data: organization });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
@@ -120,40 +120,40 @@ const updateCollege = async (req, res) => {
   }
 };
 
-const deleteCollege = async (req, res) => {
+const deleteOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if college has associated leads
-    const college = await prisma.college.findUnique({
+    // Check if organization has associated leads
+    const organization = await prisma.organization.findUnique({
       where: { id },
       include: { _count: { select: { leads: true } } }
     });
 
-    if (!college) {
-      return res.status(404).json({ success: false, message: 'College not found' });
+    if (!organization) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
     }
 
-    if (req.user.role !== 'ADMIN' && college.created_by !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Access denied: You can only delete colleges you created.' });
+    if (req.user.role !== 'ADMIN' && organization.created_by !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied: You can only delete organizations you created.' });
     }
 
-    if (college._count.leads > 0) {
-      return res.status(400).json({ success: false, message: 'Cannot delete college with active leads' });
+    if (organization._count.leads > 0) {
+      return res.status(400).json({ success: false, message: 'Cannot delete organization with active leads' });
     }
 
-    await prisma.college.delete({
+    await prisma.organization.delete({
       where: { id }
     });
 
-    res.status(200).json({ success: true, message: 'College deleted successfully' });
+    res.status(200).json({ success: true, message: 'Organization deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-// --- COLLEGE CONTACTS ---
+// --- ORGANIZATION CONTACTS ---
 
 const contactSchema = z.object({
   name: z.string().min(2),
@@ -163,10 +163,10 @@ const contactSchema = z.object({
   is_primary: z.boolean().optional()
 });
 
-const getCollegeContacts = async (req, res) => {
+const getOrganizationContacts = async (req, res) => {
   try {
-    const contacts = await prisma.collegeContact.findMany({
-      where: { college_id: req.params.id },
+    const contacts = await prisma.organizationContact.findMany({
+      where: { organization_id: req.params.id },
       orderBy: [
         { is_primary: 'desc' },
         { created_at: 'desc' }
@@ -179,22 +179,22 @@ const getCollegeContacts = async (req, res) => {
   }
 };
 
-const addCollegeContact = async (req, res) => {
+const addOrganizationContact = async (req, res) => {
   try {
     const validatedData = contactSchema.parse(req.body);
     
-    // If setting as primary, unset other primary contacts for this college
+    // If setting as primary, unset other primary contacts for this organization
     if (validatedData.is_primary) {
-      await prisma.collegeContact.updateMany({
-        where: { college_id: req.params.id, is_primary: true },
+      await prisma.organizationContact.updateMany({
+        where: { organization_id: req.params.id, is_primary: true },
         data: { is_primary: false }
       });
     }
 
-    const contact = await prisma.collegeContact.create({
+    const contact = await prisma.organizationContact.create({
       data: {
         ...validatedData,
-        college_id: req.params.id
+        organization_id: req.params.id
       }
     });
     res.status(201).json({ success: true, message: 'Contact added successfully', data: contact });
@@ -207,23 +207,23 @@ const addCollegeContact = async (req, res) => {
   }
 };
 
-const updateCollegeContact = async (req, res) => {
+const updateOrganizationContact = async (req, res) => {
   try {
     const { contactId } = req.params;
     const validatedData = contactSchema.partial().parse(req.body);
 
-    // If setting as primary, unset other primary contacts for this college
+    // If setting as primary, unset other primary contacts for this organization
     if (validatedData.is_primary) {
-      const contact = await prisma.collegeContact.findUnique({ where: { id: contactId } });
+      const contact = await prisma.organizationContact.findUnique({ where: { id: contactId } });
       if (contact) {
-        await prisma.collegeContact.updateMany({
-          where: { college_id: contact.college_id, is_primary: true },
+        await prisma.organizationContact.updateMany({
+          where: { organization_id: contact.organization_id, is_primary: true },
           data: { is_primary: false }
         });
       }
     }
 
-    const updated = await prisma.collegeContact.update({
+    const updated = await prisma.organizationContact.update({
       where: { id: contactId },
       data: validatedData
     });
@@ -238,9 +238,9 @@ const updateCollegeContact = async (req, res) => {
   }
 };
 
-const deleteCollegeContact = async (req, res) => {
+const deleteOrganizationContact = async (req, res) => {
   try {
-    await prisma.collegeContact.delete({
+    await prisma.organizationContact.delete({
       where: { id: req.params.contactId }
     });
     res.status(200).json({ success: true, message: 'Contact deleted' });
@@ -251,13 +251,13 @@ const deleteCollegeContact = async (req, res) => {
 };
 
 module.exports = {
-  createCollege,
-  getColleges,
-  getCollegeById,
-  updateCollege,
-  deleteCollege,
-  getCollegeContacts,
-  addCollegeContact,
-  updateCollegeContact,
-  deleteCollegeContact
+  createOrganization,
+  getOrganizations,
+  getOrganizationById,
+  updateOrganization,
+  deleteOrganization,
+  getOrganizationContacts,
+  addOrganizationContact,
+  updateOrganizationContact,
+  deleteOrganizationContact
 };

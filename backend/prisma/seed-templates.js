@@ -211,12 +211,12 @@ Team Octalbees`,
     audience: 'PLACEMENT_CELL',
     category: 'COLLABORATION',
     subject: 'Internship Opportunities for Students – Industry Collaboration with Octalbees',
-    variables: 'placement_officer_name,college_name,contact_details',
+    variables: 'placement_officer_name,organization_name,contact_details',
     body: `Dear {{placement_officer_name}},
 
 Greetings from Octalbees!
 
-We are reaching out to explore an internship collaboration with {{college_name}} to provide students with practical industry exposure and project-based internship opportunities.
+We are reaching out to explore an internship collaboration with {{organization_name}} to provide students with practical industry exposure and project-based internship opportunities.
 
 Octalbees currently offers internship programs across Technology, Data, AI, Design, Marketing, and Business domains.
 
@@ -271,12 +271,12 @@ Team Octalbees
     audience: 'PLACEMENT_CELL',
     category: 'FOLLOW_UP',
     subject: 'Follow-Up: Internship Collaboration with Octalbees',
-    variables: 'placement_officer_name,college_name,contact_details',
+    variables: 'placement_officer_name,organization_name,contact_details',
     body: `Dear {{placement_officer_name}},
 
 Greetings from Octalbees.
 
-I'm following up regarding our previous email about internship opportunities for students of {{college_name}}.
+I'm following up regarding our previous email about internship opportunities for students of {{organization_name}}.
 
 We would be happy to collaborate with your placement/training team and provide students with opportunities to gain practical experience through project-based internships.
 
@@ -303,15 +303,15 @@ Team Octalbees
     name: 'Placement Cell — Detailed Proposal',
     audience: 'PLACEMENT_CELL',
     category: 'PROPOSAL',
-    subject: 'Internship Program Proposal for {{college_name}} – Octalbees',
-    variables: 'placement_officer_name,college_name,duration,mode,start_date,contact_details',
+    subject: 'Internship Program Proposal for {{organization_name}} – Octalbees',
+    variables: 'placement_officer_name,organization_name,duration,mode,start_date,contact_details',
     body: `Dear {{placement_officer_name}},
 
 Greetings from Octalbees!
 
 We are pleased to introduce Octalbees as an organization offering practical, project-based internship opportunities for students and freshers.
 
-We would like to explore a potential internship collaboration with {{college_name}} and provide your students with opportunities to gain exposure to real-world projects and industry practices.
+We would like to explore a potential internship collaboration with {{organization_name}} and provide your students with opportunities to gain exposure to real-world projects and industry practices.
 
 **Internship Domains**
 
@@ -358,7 +358,7 @@ We would be glad to provide your placement/training team with detailed role desc
 
 Please let us know the appropriate contact person or email address for sharing the complete proposal.
 
-Thank you for your time. We look forward to the possibility of working with {{college_name}}.
+Thank you for your time. We look forward to the possibility of working with {{organization_name}}.
 
 Best Regards,
 Team Octalbees
@@ -369,12 +369,12 @@ Team Octalbees
     audience: 'PLACEMENT_CELL',
     category: 'SHORT_OUTREACH',
     subject: 'Internship Collaboration Opportunity – Octalbees',
-    variables: 'placement_officer_name,college_name,contact_details',
+    variables: 'placement_officer_name,organization_name,contact_details',
     body: `Dear {{placement_officer_name}},
 
 Greetings from Octalbees!
 
-We are reaching out to explore an internship collaboration with {{college_name}} for your students.
+We are reaching out to explore an internship collaboration with {{organization_name}} for your students.
 
 We currently offer project-based internship opportunities across:
 • Data Science

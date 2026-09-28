@@ -7,13 +7,13 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { DetailSkeleton } from '../components/ui/Skeleton';
 
-const CollegeDetails = () => {
+const OrganizationDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
   
-  const [college, setCollege] = useState(null);
+  const [organization, setOrganization] = useState(null);
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -23,24 +23,24 @@ const CollegeDetails = () => {
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
 
   useEffect(() => {
-    fetchCollege();
+    fetchOrganization();
     fetchContacts();
   }, [id]);
 
-  const fetchCollege = async () => {
+  const fetchOrganization = async () => {
     try {
-      const res = await api.get(`/colleges/${id}`);
-      setCollege(res.data.data);
+      const res = await api.get(`/organizations/${id}`);
+      setOrganization(res.data.data);
     } catch (error) {
-      console.error('Failed to fetch college', error);
-      toast.error('Failed to load college details.');
-      navigate('/colleges');
+      console.error('Failed to fetch organization', error);
+      toast.error('Failed to load organization details.');
+      navigate('/organizations');
     }
   };
 
   const fetchContacts = async () => {
     try {
-      const res = await api.get(`/colleges/${id}/contacts`);
+      const res = await api.get(`/organizations/${id}/contacts`);
       setContacts(res.data.data);
     } catch (error) {
       console.error('Failed to fetch contacts', error);
@@ -63,10 +63,10 @@ const CollegeDetails = () => {
   const onSubmitContact = async (data) => {
     try {
       if (editingContact) {
-        await api.put(`/colleges/contacts/${editingContact.id}`, data);
+        await api.put(`/organizations/contacts/${editingContact.id}`, data);
         toast.success('Contact updated successfully');
       } else {
-        await api.post(`/colleges/${id}/contacts`, data);
+        await api.post(`/organizations/${id}/contacts`, data);
         toast.success('Contact added successfully');
       }
       setIsModalOpen(false);
@@ -79,7 +79,7 @@ const CollegeDetails = () => {
   const deleteContact = async (contactId) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       try {
-        await api.delete(`/colleges/contacts/${contactId}`);
+        await api.delete(`/organizations/contacts/${contactId}`);
         toast.success('Contact deleted');
         fetchContacts();
       } catch (error) {
@@ -98,25 +98,25 @@ const CollegeDetails = () => {
       {/* Header */}
       <div className="flex items-center gap-4">
         <button 
-          onClick={() => navigate('/colleges')}
+          onClick={() => navigate('/organizations')}
           className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-all hover:shadow-sm"
         >
           <ArrowLeft size={20} />
         </button>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{college?.name}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{organization?.name}</h1>
             <span className="px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-600/10 text-purple-700 dark:text-orange-400 text-xs font-bold border border-purple-100 dark:border-orange-500/20">
-              {college?.type || 'COLLEGE'}
+              {organization?.type || 'ORGANIZATION'}
             </span>
           </div>
           <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 dark:text-zinc-400">
-            {college?.city && (
-              <span className="flex items-center gap-1.5"><MapPin size={14} /> {college.city}, {college.state}</span>
+            {organization?.city && (
+              <span className="flex items-center gap-1.5"><MapPin size={14} /> {organization.city}, {organization.state}</span>
             )}
-            {college?.website && (
-              <a href={college.website} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline">
-                <Globe size={14} /> {college.website.replace(/^https?:\/\//, '')}
+            {organization?.website && (
+              <a href={organization.website} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline">
+                <Globe size={14} /> {organization.website.replace(/^https?:\/\//, '')}
               </a>
             )}
           </div>
@@ -125,7 +125,7 @@ const CollegeDetails = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* College Info Card */}
+        {/* Organization Info Card */}
         <div className="md:col-span-1 space-y-6">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -133,28 +133,28 @@ const CollegeDetails = () => {
             </h3>
             
             <div className="space-y-4">
-              {college?.email && (
+              {organization?.email && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1">Email</p>
-                  <p className="text-sm text-slate-900 dark:text-white">{college.email}</p>
+                  <p className="text-sm text-slate-900 dark:text-white">{organization.email}</p>
                 </div>
               )}
-              {college?.phone && (
+              {organization?.phone && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1">Phone</p>
-                  <p className="text-sm text-slate-900 dark:text-white">{college.phone}</p>
+                  <p className="text-sm text-slate-900 dark:text-white">{organization.phone}</p>
                 </div>
               )}
-              {college?.address && (
+              {organization?.address && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1">Address</p>
-                  <p className="text-sm text-slate-900 dark:text-white">{college.address}</p>
+                  <p className="text-sm text-slate-900 dark:text-white">{organization.address}</p>
                 </div>
               )}
-              {college?.notes && (
+              {organization?.notes && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1">Notes</p>
-                  <p className="text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-zinc-950 p-3 rounded-xl">{college.notes}</p>
+                  <p className="text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-zinc-950 p-3 rounded-xl">{organization.notes}</p>
                 </div>
               )}
             </div>
@@ -315,4 +315,4 @@ const CollegeDetails = () => {
   );
 };
 
-export default CollegeDetails;
+export default OrganizationDetails;

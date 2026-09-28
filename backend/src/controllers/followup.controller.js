@@ -111,7 +111,7 @@ const getFollowUps = async (req, res) => {
       where,
       include: {
         lead: {
-          select: { name: true, lead_code: true, phone: true, email: true, college: { select: { name: true } } }
+          select: { name: true, lead_code: true, phone: true, email: true, organization: { select: { name: true } } }
         },
         assigned_user: {
           select: { name: true }

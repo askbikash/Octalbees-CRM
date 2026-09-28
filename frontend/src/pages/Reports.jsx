@@ -23,7 +23,7 @@ const STATUS_LABELS = {
 
 const SOURCE_LABELS = {
   WEBSITE: 'Website', INSTAGRAM: 'Instagram', LINKEDIN: 'LinkedIn',
-  WHATSAPP: 'WhatsApp', COLLEGE_OUTREACH: 'College Outreach',
+  WHATSAPP: 'WhatsApp', ORGANIZATION_OUTREACH: 'Organization Outreach',
   STUDENT_COMMUNITY: 'Student Community', REFERRAL: 'Referral',
   GOOGLE: 'Google', ADVERTISEMENT: 'Ads', EVENT: 'Event', OTHER: 'Other'
 };
@@ -110,13 +110,13 @@ const Reports = () => {
 
   if (!data) return null;
 
-  const { summary, funnelData, bdePerformance, sourceEffectiveness, weeklyTrends, monthlyTrends, collegeData } = data;
+  const { summary, funnelData, bdePerformance, sourceEffectiveness, weeklyTrends, monthlyTrends, organizationData } = data;
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
     { id: 'performance', label: 'Team Performance', icon: Award },
     { id: 'sources', label: 'Lead Sources', icon: Target },
-    { id: 'colleges', label: 'College Analytics', icon: Building2 },
+    { id: 'organizations', label: 'Organization Analytics', icon: Building2 },
   ];
 
   return (
@@ -439,22 +439,22 @@ const Reports = () => {
         </div>
       )}
 
-      {/* ===== COLLEGE ANALYTICS TAB ===== */}
-      {activeTab === 'colleges' && (
+      {/* ===== ORGANIZATION ANALYTICS TAB ===== */}
+      {activeTab === 'organizations' && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Building2 size={18} className="text-indigo-500" /> College-wise Performance
+                <Building2 size={18} className="text-indigo-500" /> Organization-wise Performance
               </h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Top 15 colleges by lead volume</p>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Top 15 organizations by lead volume</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400 uppercase text-xs tracking-wider">
                   <tr>
                     <th className="px-6 py-4 font-semibold">#</th>
-                    <th className="px-6 py-4 font-semibold">College</th>
+                    <th className="px-6 py-4 font-semibold">Organization</th>
                     <th className="px-6 py-4 font-semibold">City</th>
                     <th className="px-6 py-4 font-semibold text-center">Leads</th>
                     <th className="px-6 py-4 font-semibold text-center">Converted</th>
@@ -463,18 +463,18 @@ const Reports = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-zinc-800">
-                  {collegeData.length === 0 ? (
+                  {organizationData.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="px-6 py-12 text-center text-slate-500 dark:text-zinc-400">
                         <Building2 size={32} className="mx-auto mb-2 opacity-40" />
-                        No college data available. Link leads to colleges to see analytics.
+                        No organization data available. Link leads to organizations to see analytics.
                       </td>
                     </tr>
                   ) : (
-                    collegeData.map((c, i) => (
+                    organizationData.map((c, i) => (
                       <tr key={i} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                         <td className="px-6 py-4 text-slate-400 dark:text-zinc-500 font-mono text-sm">{i + 1}</td>
-                        <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{c.collegeName}</td>
+                        <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{c.organizationName}</td>
                         <td className="px-6 py-4 text-slate-500 dark:text-zinc-400 text-sm">{c.city || '—'}</td>
                         <td className="px-6 py-4 text-center font-semibold text-slate-700 dark:text-zinc-300">{c.totalLeads}</td>
                         <td className="px-6 py-4 text-center font-bold text-emerald-600 dark:text-emerald-400">{c.converted}</td>
