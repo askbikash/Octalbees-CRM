@@ -191,14 +191,11 @@ const Leads = () => {
   };
 
   // Email Template functions
-  const openEmailModal = async (leadIds) => {
-    try {
-      const res = await api.get('/templates');
-      setEmailTemplates(res.data.data);
-    } catch (error) {
-      console.error('Failed to fetch templates', error);
-    }
+  const openEmailModal = (leadIds) => {
     setEmailModal({ open: true, leadIds, subject: '', body: '', selectedTemplateId: '' });
+    api.get('/templates')
+      .then(res => setEmailTemplates(res.data.data))
+      .catch(error => console.error('Failed to fetch templates', error));
   };
 
   const handleTemplateSelect = (templateId) => {
@@ -265,6 +262,7 @@ const Leads = () => {
         });
 
         await api.post('/templates/send', { 
+          leadId: lead.id,
           to: lead.email, 
           subject, 
           htmlBody: body 

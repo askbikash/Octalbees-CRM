@@ -534,7 +534,7 @@ const bulkActionLeads = async (req, res) => {
           }))
         );
 
-        const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+        const backendUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
         const { sendBulkEmail } = require('../utils/email');
         await sendBulkEmail(createdEmailLogs, message, req.user.name, backendUrl);
         
@@ -553,7 +553,7 @@ const bulkActionLeads = async (req, res) => {
           data: { status: 'CONTACTED' }
         });
       }
-      updatedCount = emails.length;
+      updatedCount = leads.length;
     } else {
       await prisma.$transaction(async (tx) => {
         if (action === 'delete') {

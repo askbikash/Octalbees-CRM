@@ -126,14 +126,38 @@ const deleteTemplate = async (req, res) => {
 // Send Email using template content
 const sendEmail = async (req, res) => {
   try {
-    const { to, subject, htmlBody } = req.body;
+    const { to, subject, htmlBody, leadId } = req.body;
     
     if (!to || !subject || !htmlBody) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
+    let emailLog = { id: 'generic', to_email: to, subject };
+
+    if (leadId) {
+      emailLog = await prisma.emailLog.create({
+        data: {
+          lead_id: leadId,
+          to_email: to,
+          subject,
+          sent_by: req.user.id,
+          status: 'SENT'
+        }
+      });
+      
+      await prisma.activity.create({
+        data: {
+          lead_id: leadId,
+          user_id: req.user.id,
+          type: 'EMAIL',
+          description: `Sent email: ${subject}`
+        }
+      });
+    }
+
+    const backendUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
     // Use existing bulk email utility which handles both local SMTP and prod Vercel proxy
-    await sendBulkEmail(to, subject, htmlBody, req.user.name);
+    await sendBulkEmail([emailLog], htmlBody, req.user.name, backendUrl);
     
     res.json({ success: true, message: 'Email sent successfully' });
   } catch (error) {
