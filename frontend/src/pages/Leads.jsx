@@ -50,7 +50,9 @@ const Leads = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteModal, setNoteModal] = useState({ open: false, leadId: null, note: '' });
   const [deleteModal, setDeleteModal] = useState({ open: false, type: null, data: null });
-  const [emailModal, setEmailModal] = useState({ open: false, subject: '', message: '' });
+  const [emailModal, setEmailModal] = useState({ open: false, leadIds: [], subject: '', body: '', selectedTemplateId: '' });
+  const [emailTemplates, setEmailTemplates] = useState([]);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -181,11 +183,103 @@ const Leads = () => {
     try {
       await api.patch(`/leads/${leadId}/status`, { status: newStatus });
       toast.success(`Lead moved to ${newStatus}`);
-      fetchLeads(); // refresh leads to reflect new state
+      fetchLeads();
     } catch (error) {
       toast.error('Failed to move lead');
       console.error(error);
     }
+  };
+
+  // Email Template functions
+  const openEmailModal = async (leadIds) => {
+    try {
+      const res = await api.get('/templates');
+      setEmailTemplates(res.data.data);
+    } catch (error) {
+      console.error('Failed to fetch templates', error);
+    }
+    setEmailModal({ open: true, leadIds, subject: '', body: '', selectedTemplateId: '' });
+  };
+
+  const handleTemplateSelect = (templateId) => {
+    const template = emailTemplates.find(t => t.id === templateId);
+    if (template) {
+      // Get leads data for variable replacement
+      const targetLeads = leads.filter(l => emailModal.leadIds.includes(l.id));
+      let body = template.body;
+      let subject = template.subject;
+
+      // If single lead, auto-replace variables
+      if (targetLeads.length === 1) {
+        const lead = targetLeads[0];
+        const replacements = {
+          '{{student_name}}': lead.name,
+          '{{placement_officer_name}}': lead.name,
+          '{{college_name}}': lead.college?.name || '',
+          '{{program_name}}': '',
+          '{{duration}}': '',
+          '{{mode}}': '',
+          '{{start_date}}': '',
+          '{{contact_details}}': '',
+          '{{next_step}}': '',
+        };
+        Object.entries(replacements).forEach(([key, value]) => {
+          body = body.replaceAll(key, value);
+          subject = subject.replaceAll(key, value);
+        });
+      }
+
+      setEmailModal(prev => ({ ...prev, selectedTemplateId: templateId, subject, body }));
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailModal.subject || !emailModal.body) {
+      toast.error('Subject and body are required');
+      return;
+    }
+
+    const targetLeads = leads.filter(l => emailModal.leadIds.includes(l.id) && l.email);
+    if (targetLeads.length === 0) {
+      toast.error('No leads with email addresses found');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    let sent = 0;
+    let failed = 0;
+
+    for (const lead of targetLeads) {
+      try {
+        // Replace variables per lead
+        let body = emailModal.body;
+        let subject = emailModal.subject;
+        const replacements = {
+          '{{student_name}}': lead.name,
+          '{{placement_officer_name}}': lead.name,
+          '{{college_name}}': lead.college?.name || '',
+        };
+        Object.entries(replacements).forEach(([key, value]) => {
+          body = body.replaceAll(key, value);
+          subject = subject.replaceAll(key, value);
+        });
+
+        await api.post('/templates/send', { 
+          to: lead.email, 
+          subject, 
+          htmlBody: body 
+        });
+        sent++;
+      } catch (error) {
+        failed++;
+        console.error(`Failed to send to ${lead.email}`, error);
+      }
+    }
+
+    setIsSendingEmail(false);
+    setEmailModal({ open: false, leadIds: [], subject: '', body: '', selectedTemplateId: '' });
+    if (sent > 0) toast.success(`Email sent to ${sent} lead${sent > 1 ? 's' : ''}`);
+    if (failed > 0) toast.error(`Failed to send to ${failed} lead${failed > 1 ? 's' : ''}`);
   };
 
   const fetchColleges = async () => {
@@ -665,8 +759,7 @@ const Leads = () => {
                           <button 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              setSelectedLeads([lead.id]);
-                              setEmailModal({ open: true, subject: '', message: '' }); 
+                              openEmailModal([lead.id]);
                             }}
                             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 dark:text-zinc-300 dark:hover:text-indigo-400 dark:hover:bg-indigo-500/10 rounded-lg transition-colors text-left"
                           >
@@ -1128,14 +1221,23 @@ const Leads = () => {
 
       {/* Floating Bulk Action Bar */}
       {selectedLeads.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-10 fade-in duration-300">
-          <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-4">
-            <div className="flex items-center gap-2 pr-4 border-r border-slate-700 dark:border-slate-200">
-              <CheckSquare size={18} className="text-purple-400 dark:text-orange-500" />
-              <span className="font-bold">{selectedLeads.length} Selected</span>
+        <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-10 fade-in duration-300 w-[calc(100%-2rem)] md:w-auto">
+          <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 md:px-4 py-3 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center gap-3 md:gap-4 border border-slate-800 dark:border-slate-200">
+            <div className="flex items-center gap-2 md:pr-4 md:border-r border-slate-700 dark:border-slate-200 w-full md:w-auto justify-between md:justify-start">
+              <div className="flex items-center gap-2">
+                <CheckSquare size={18} className="text-purple-400 dark:text-orange-500" />
+                <span className="font-bold whitespace-nowrap">{selectedLeads.length} Selected</span>
+              </div>
+              <button 
+                onClick={() => setSelectedLeads([])}
+                className="p-1 text-slate-400 hover:text-white dark:text-slate-500 dark:hover:text-slate-900 rounded-lg transition-colors md:hidden"
+                title="Clear Selection"
+              >
+                <X size={18} />
+              </button>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <select 
                 onChange={(e) => {
                   if(e.target.value) {
@@ -1194,7 +1296,7 @@ const Leads = () => {
               
               <button 
                 onClick={() => setSelectedLeads([])}
-                className="p-1.5 text-slate-400 hover:text-white dark:text-slate-500 dark:hover:text-slate-900 rounded-lg transition-colors ml-2"
+                className="p-1.5 text-slate-400 hover:text-white dark:text-slate-500 dark:hover:text-slate-900 rounded-lg transition-colors ml-2 hidden md:block"
                 title="Clear Selection"
               >
                 <X size={18} />
@@ -1204,82 +1306,6 @@ const Leads = () => {
         </div>
       )}
 
-      {/* Bulk Email Modal */}
-      {emailModal.open && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-zinc-800">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Mail className="text-purple-600 dark:text-orange-500" />
-                Send Bulk Email
-              </h3>
-              <button 
-                onClick={() => setEmailModal({ open: false, subject: '', message: '' })}
-                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <X size={20} className="text-slate-500" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Load Template</label>
-                <select
-                  onChange={(e) => {
-                    const template = e.target.value;
-                    if(template === 'intro') {
-                      setEmailModal(prev => ({ ...prev, subject: 'Introduction from Octalbees CRM', message: 'Hi there,\n\nI noticed you recently showed interest in our services and wanted to reach out and introduce myself.\n\nLet me know if you are free for a quick 10-minute call this week to discuss how we can help your business grow.\n\nBest regards,' }));
-                    } else if (template === 'followup') {
-                      setEmailModal(prev => ({ ...prev, subject: 'Checking in - Octalbees CRM', message: 'Hi,\n\nI wanted to quickly circle back on my previous email. I know things can get busy!\n\nAre you still interested in exploring a partnership?\n\nLooking forward to hearing from you.' }));
-                    }
-                    e.target.value = '';
-                  }}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 outline-none text-slate-900 dark:text-white cursor-pointer mb-4"
-                >
-                  <option value="">Select a template...</option>
-                  <option value="intro">Initial Outreach</option>
-                  <option value="followup">Quick Follow-up</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Subject</label>
-                <input
-                  type="text"
-                  value={emailModal.subject}
-                  onChange={(e) => setEmailModal(prev => ({ ...prev, subject: e.target.value }))}
-                  placeholder="e.g., Octalbees CRM Important Update"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 outline-none text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">Message</label>
-                <textarea
-                  value={emailModal.message}
-                  onChange={(e) => setEmailModal(prev => ({ ...prev, message: e.target.value }))}
-                  placeholder="Type your message here..."
-                  rows={6}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 outline-none text-slate-900 dark:text-white resize-none"
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/30 flex justify-end gap-3">
-              <button
-                onClick={() => setEmailModal({ open: false, subject: '', message: '' })}
-                className="px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitBulkEmail}
-                disabled={isBulkActioning || !emailModal.subject.trim() || !emailModal.message.trim()}
-                className="px-5 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-orange-500 dark:hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
-              >
-                {isBulkActioning ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-                Send to {selectedLeads.length} Leads
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       {deleteModal.open && (
@@ -1313,6 +1339,100 @@ const Leads = () => {
                   Delete
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Email Modal */}
+      {emailModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden my-8 flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30 shrink-0">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Send Email</h2>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
+                  Sending to {emailModal.leadIds.length} lead{emailModal.leadIds.length > 1 ? 's' : ''}
+                </p>
+              </div>
+              <button onClick={() => setEmailModal({ open: false, leadIds: [], subject: '', body: '', selectedTemplateId: '' })} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-5">
+              {/* Template Picker */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Choose Template (Optional)</label>
+                <select
+                  value={emailModal.selectedTemplateId}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 text-slate-900 dark:text-white outline-none transition-all"
+                >
+                  <option value="">— Write custom email —</option>
+                  {emailTemplates.filter(t => t.audience === 'STUDENT').length > 0 && (
+                    <optgroup label="🎓 Student Templates">
+                      {emailTemplates.filter(t => t.audience === 'STUDENT').map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {emailTemplates.filter(t => t.audience === 'PLACEMENT_CELL').length > 0 && (
+                    <optgroup label="🏫 Placement Cell Templates">
+                      {emailTemplates.filter(t => t.audience === 'PLACEMENT_CELL').map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Subject *</label>
+                <input
+                  value={emailModal.subject}
+                  onChange={(e) => setEmailModal(prev => ({ ...prev, subject: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 focus:ring-2 focus:ring-purple-500/20 text-slate-900 dark:text-white outline-none transition-all"
+                  placeholder="Email subject..."
+                />
+              </div>
+
+              {/* Body */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Email Body *</label>
+                <textarea
+                  value={emailModal.body}
+                  onChange={(e) => setEmailModal(prev => ({ ...prev, body: e.target.value }))}
+                  rows={14}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-900 focus:border-purple-500 dark:focus:border-orange-500 focus:ring-2 focus:ring-purple-500/20 text-slate-900 dark:text-white outline-none transition-all resize-none text-sm leading-relaxed"
+                  placeholder="Write your email body..."
+                />
+              </div>
+
+              {/* Recipients preview */}
+              <div className="bg-slate-50 dark:bg-zinc-800/30 rounded-xl p-3 border border-slate-200 dark:border-zinc-700">
+                <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-2">Recipients</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {leads.filter(l => emailModal.leadIds.includes(l.id)).map(lead => (
+                    <span key={lead.id} className={`text-xs px-2 py-0.5 rounded-md border ${lead.email ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 border-red-200 dark:border-red-500/20 line-through'}`}>
+                      {lead.name} {lead.email ? `(${lead.email})` : '(no email)'}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-3 shrink-0">
+              <button onClick={() => setEmailModal({ open: false, leadIds: [], subject: '', body: '', selectedTemplateId: '' })}
+                className="px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
+              >Cancel</button>
+              <button onClick={handleSendEmail} disabled={isSendingEmail}
+                className="px-5 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 transition-colors shadow-sm shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+                Send {emailModal.leadIds.length > 1 ? `to ${emailModal.leadIds.length} leads` : 'Email'}
+              </button>
             </div>
           </div>
         </div>

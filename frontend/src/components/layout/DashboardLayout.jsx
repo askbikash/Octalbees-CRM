@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarDays, Building2, Settings, LogOut, Menu, X, Sun, Moon, Zap, Activity } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, Building2, Settings, LogOut, Menu, X, Sun, Moon, Zap, Activity, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { clsx } from 'clsx';
@@ -46,6 +46,10 @@ const DashboardLayout = () => {
   if (user?.role === 'ADMIN') {
     navItems.splice(5, 0, { name: 'Audit Trail', path: '/audit', icon: Activity });
   }
+
+  // Add Templates before Settings
+  const settingsIdx = navItems.findIndex(n => n.name === 'Settings');
+  navItems.splice(settingsIdx, 0, { name: 'Templates', path: '/templates', icon: FileText });
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">

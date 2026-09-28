@@ -16,6 +16,7 @@ import FollowUps from './pages/FollowUps';
 import Team from './pages/Team';
 import Settings from './pages/Settings';
 import AuditTrail from './pages/AuditTrail';
+import EmailTemplates from './pages/EmailTemplates';
 
 // Temporary placeholders for other pages
 const Placeholder = ({ title }) => (
@@ -59,6 +60,7 @@ const App = () => {
               <Route path="followups" element={<FollowUps />} />
               <Route path="users" element={<Team />} />
               <Route path="audit" element={<AuditTrail />} />
+              <Route path="templates" element={<EmailTemplates />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             

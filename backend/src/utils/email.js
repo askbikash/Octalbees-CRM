@@ -102,12 +102,16 @@ const sendBulkEmail = async (emails, subject, message, senderName) => {
 
   const transporter = await createTransporter();
   const emailList = Array.isArray(emails) ? emails : [emails];
+  const formattedMessage = message
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br/>');
+
   const htmlContent = `
 <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1f2937;">
   
   <!-- Body -->
   <div style="font-size: 16px; line-height: 1.6; color: #374151; font-weight: 400;">
-    ${message.replace(/\n/g, '<br/>')}
+    ${formattedMessage}
   </div>
   
   <!-- Footer -->
