@@ -88,6 +88,10 @@ const generateOTP = () => {
  * Send bulk email to multiple recipients
  */
 const sendBulkEmail = async (emailLogs, message, senderName, backendUrl) => {
+  const formattedMessage = message
+    .replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br/>');
+
   if (process.env.NODE_ENV === 'production') {
     const frontendUrl = process.env.FRONTEND_URL || 'https://crm.octalbees.com';
     // Fallback if production function doesn't support emailLogs structure yet,
@@ -96,7 +100,7 @@ const sendBulkEmail = async (emailLogs, message, senderName, backendUrl) => {
     const response = await fetch(`${frontendUrl}/api/send-bulk-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emails, subject: emailLogs[0]?.subject || '', message, senderName })
+      body: JSON.stringify({ emails, subject: emailLogs[0]?.subject || '', message: formattedMessage, senderName })
     });
     
     if (!response.ok) throw new Error('Vercel email proxy failed');
@@ -104,9 +108,6 @@ const sendBulkEmail = async (emailLogs, message, senderName, backendUrl) => {
   }
 
   const transporter = await createTransporter();
-  const formattedMessage = message
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br/>');
 
   // Send individual emails with unique tracking pixel and link wrappers
   const sendPromises = emailLogs.map(log => {
