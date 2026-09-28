@@ -1,5 +1,6 @@
 const express = require('express');
 const { createFollowUp, getFollowUps, updateFollowUp } = require('../controllers/followup.controller');
+const { getFollowUpCalendar } = require('../controllers/reports.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 
 const router = express.Router();
@@ -9,6 +10,7 @@ router.use(authenticate);
 
 router.post('/', createFollowUp);
 router.get('/', getFollowUps);
+router.get('/calendar', getFollowUpCalendar);
 router.patch('/:id', updateFollowUp);
 
 module.exports = router;

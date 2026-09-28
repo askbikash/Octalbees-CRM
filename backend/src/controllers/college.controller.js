@@ -153,10 +153,111 @@ const deleteCollege = async (req, res) => {
   }
 };
 
+// --- COLLEGE CONTACTS ---
+
+const contactSchema = z.object({
+  name: z.string().min(2),
+  designation: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().optional(),
+  is_primary: z.boolean().optional()
+});
+
+const getCollegeContacts = async (req, res) => {
+  try {
+    const contacts = await prisma.collegeContact.findMany({
+      where: { college_id: req.params.id },
+      orderBy: [
+        { is_primary: 'desc' },
+        { created_at: 'desc' }
+      ]
+    });
+    res.status(200).json({ success: true, data: contacts });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+const addCollegeContact = async (req, res) => {
+  try {
+    const validatedData = contactSchema.parse(req.body);
+    
+    // If setting as primary, unset other primary contacts for this college
+    if (validatedData.is_primary) {
+      await prisma.collegeContact.updateMany({
+        where: { college_id: req.params.id, is_primary: true },
+        data: { is_primary: false }
+      });
+    }
+
+    const contact = await prisma.collegeContact.create({
+      data: {
+        ...validatedData,
+        college_id: req.params.id
+      }
+    });
+    res.status(201).json({ success: true, message: 'Contact added successfully', data: contact });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
+    }
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+const updateCollegeContact = async (req, res) => {
+  try {
+    const { contactId } = req.params;
+    const validatedData = contactSchema.partial().parse(req.body);
+
+    // If setting as primary, unset other primary contacts for this college
+    if (validatedData.is_primary) {
+      const contact = await prisma.collegeContact.findUnique({ where: { id: contactId } });
+      if (contact) {
+        await prisma.collegeContact.updateMany({
+          where: { college_id: contact.college_id, is_primary: true },
+          data: { is_primary: false }
+        });
+      }
+    }
+
+    const updated = await prisma.collegeContact.update({
+      where: { id: contactId },
+      data: validatedData
+    });
+
+    res.status(200).json({ success: true, message: 'Contact updated', data: updated });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
+    }
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+const deleteCollegeContact = async (req, res) => {
+  try {
+    await prisma.collegeContact.delete({
+      where: { id: req.params.contactId }
+    });
+    res.status(200).json({ success: true, message: 'Contact deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   createCollege,
   getColleges,
   getCollegeById,
   updateCollege,
-  deleteCollege
+  deleteCollege,
+  getCollegeContacts,
+  addCollegeContact,
+  updateCollegeContact,
+  deleteCollegeContact
 };

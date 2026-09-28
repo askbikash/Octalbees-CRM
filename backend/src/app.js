@@ -52,6 +52,7 @@ const followupRoutes = require('./routes/followup.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const activityRoutes = require('./routes/activity.routes');
 const templateRoutes = require('./routes/template.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -61,6 +62,7 @@ app.use('/api/followups', followupRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Basic health check route
 app.get('/api/health', (req, res) => {

@@ -297,7 +297,56 @@ const LeadDetails = () => {
 
         {/* Right Column: Activity Timeline */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm h-full min-h-[500px]">
+
+          {/* Status Journey Stepper */}
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Flag size={16} className="text-purple-600 dark:text-orange-400" /> Lead Journey
+            </h3>
+            <div className="flex items-center overflow-x-auto pb-2 gap-0">
+              {['NEW', 'CONTACTED', 'INTERESTED', 'FOLLOW_UP', 'MEETING_SCHEDULED', 'NEGOTIATION', 'CONVERTED'].map((step, i, arr) => {
+                const allStatuses = ['NEW', 'CONTACTED', 'INTERESTED', 'FOLLOW_UP', 'MEETING_SCHEDULED', 'NEGOTIATION', 'CONVERTED'];
+                const currentIndex = allStatuses.indexOf(lead.status);
+                const isActive = i <= currentIndex;
+                const isCurrent = lead.status === step;
+                const isLost = lead.status === 'LOST' || lead.status === 'NOT_INTERESTED';
+                const stepLabels = { NEW: 'New', CONTACTED: 'Contacted', INTERESTED: 'Interested', FOLLOW_UP: 'Follow Up', MEETING_SCHEDULED: 'Meeting', NEGOTIATION: 'Negotiation', CONVERTED: 'Converted' };
+                return (
+                  <React.Fragment key={step}>
+                    <div className="flex flex-col items-center min-w-[70px]">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all shrink-0 ${
+                        isLost ? 'border-red-300 bg-red-50 text-red-500 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400' :
+                        isCurrent ? 'border-purple-500 bg-purple-600 text-white dark:border-orange-500 dark:bg-orange-500 shadow-sm shadow-purple-500/30 dark:shadow-orange-500/30' :
+                        isActive ? 'border-emerald-400 bg-emerald-50 text-emerald-600 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                        'border-slate-200 bg-slate-50 text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500'
+                      }`}>
+                        {isActive && !isCurrent ? '✓' : i + 1}
+                      </div>
+                      <span className={`text-[9px] font-semibold mt-1 whitespace-nowrap ${
+                        isCurrent ? 'text-purple-600 dark:text-orange-400' :
+                        isActive ? 'text-emerald-600 dark:text-emerald-400' :
+                        'text-slate-400 dark:text-zinc-500'
+                      }`}>
+                        {stepLabels[step]}
+                      </span>
+                    </div>
+                    {i < arr.length - 1 && (
+                      <div className={`flex-1 h-0.5 min-w-[20px] mt-[-12px] ${
+                        isActive && i < currentIndex ? 'bg-emerald-400 dark:bg-emerald-500/40' : 'bg-slate-200 dark:bg-zinc-700'
+                      }`} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+            {(lead.status === 'LOST' || lead.status === 'NOT_INTERESTED') && (
+              <div className="mt-3 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-xs font-semibold text-red-600 dark:text-red-400">
+                ❌ Lead marked as {lead.status === 'LOST' ? 'Lost' : 'Not Interested'}{lead.lost_reason ? ` — "${lead.lost_reason}"` : ''}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm min-h-[400px]">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6 flex items-center gap-2">
               <Activity size={16} className="text-purple-600 dark:text-orange-400" /> Activity Timeline
             </h3>
@@ -324,7 +373,7 @@ const LeadDetails = () => {
               </div>
             </div>
 
-            <div className="relative border-l-2 border-slate-100 dark:border-zinc-800/80 ml-3 pl-6 space-y-8">
+            <div className="relative border-l-2 border-slate-100 dark:border-zinc-800/80 ml-3 pl-6 space-y-6">
               
               {/* Follow Ups Scheduled (if any) */}
               {lead.follow_ups?.filter(f => f.status === 'PENDING').map(followup => (
@@ -344,23 +393,39 @@ const LeadDetails = () => {
                 </div>
               ))}
 
-              {/* Past Activities */}
-              {lead.activities?.map((activity, idx) => (
-                <div key={activity.id} className="relative">
-                  <div className="absolute -left-[33px] w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-700 border-4 border-white dark:border-zinc-900" />
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">{activity.user?.name || 'System'}</span>
-                      <span className="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-1">
-                        <Calendar size={10} /> {new Date(activity.created_at).toLocaleString()}
-                      </span>
+              {/* Past Activities with type-specific icons */}
+              {lead.activities?.map((activity) => {
+                const typeConfig = {
+                  NOTE: { icon: '📝', bg: 'bg-blue-50 dark:bg-blue-500/5', border: 'border-blue-100 dark:border-blue-500/10', dot: 'bg-blue-400 dark:bg-blue-500' },
+                  STATUS_CHANGE: { icon: '🔄', bg: 'bg-purple-50 dark:bg-purple-500/5', border: 'border-purple-100 dark:border-purple-500/10', dot: 'bg-purple-500 dark:bg-purple-400' },
+                  EMAIL: { icon: '📧', bg: 'bg-indigo-50 dark:bg-indigo-500/5', border: 'border-indigo-100 dark:border-indigo-500/10', dot: 'bg-indigo-500 dark:bg-indigo-400' },
+                  CALL: { icon: '📞', bg: 'bg-emerald-50 dark:bg-emerald-500/5', border: 'border-emerald-100 dark:border-emerald-500/10', dot: 'bg-emerald-500 dark:bg-emerald-400' },
+                  WHATSAPP: { icon: '💬', bg: 'bg-green-50 dark:bg-green-500/5', border: 'border-green-100 dark:border-green-500/10', dot: 'bg-green-500 dark:bg-green-400' },
+                  MEETING: { icon: '🤝', bg: 'bg-amber-50 dark:bg-amber-500/5', border: 'border-amber-100 dark:border-amber-500/10', dot: 'bg-amber-500 dark:bg-amber-400' },
+                  ASSIGNMENT: { icon: '👤', bg: 'bg-cyan-50 dark:bg-cyan-500/5', border: 'border-cyan-100 dark:border-cyan-500/10', dot: 'bg-cyan-500 dark:bg-cyan-400' },
+                  FOLLOW_UP_CREATED: { icon: '📅', bg: 'bg-orange-50 dark:bg-orange-500/5', border: 'border-orange-100 dark:border-orange-500/10', dot: 'bg-orange-500 dark:bg-orange-400' },
+                  FOLLOW_UP_COMPLETED: { icon: '✅', bg: 'bg-emerald-50 dark:bg-emerald-500/5', border: 'border-emerald-100 dark:border-emerald-500/10', dot: 'bg-emerald-500 dark:bg-emerald-400' },
+                };
+                const config = typeConfig[activity.type] || typeConfig.NOTE;
+
+                return (
+                  <div key={activity.id} className="relative">
+                    <div className={`absolute -left-[33px] w-4 h-4 rounded-full ${config.dot} border-4 border-white dark:border-zinc-900`} />
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm">{config.icon}</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">{activity.user?.name || 'System'}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                          <Calendar size={10} /> {new Date(activity.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className={`text-sm text-slate-600 dark:text-zinc-400 ${config.bg} ${config.border} border p-3 rounded-xl`}>
+                        {activity.description}
+                      </p>
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-950 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
-                      {activity.description}
-                    </p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               
               {(!lead.activities || lead.activities.length === 0) && (
                 <p className="text-sm text-slate-400 dark:text-zinc-500 italic">No activity recorded yet.</p>
@@ -375,3 +440,4 @@ const LeadDetails = () => {
 };
 
 export default LeadDetails;
+

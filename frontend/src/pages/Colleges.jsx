@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Search, Plus, MapPin, Globe, Loader2, X, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import api from '../services/api';
@@ -15,6 +16,8 @@ const Colleges = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [editingCollege, setEditingCollege] = useState(null);
+  
+  const navigate = useNavigate();
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
 
@@ -168,7 +171,11 @@ const Colleges = () => {
                 </tr>
               ) : (
                 colleges.map((college) => (
-                  <tr key={college.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer bg-white dark:bg-zinc-900">
+                  <tr 
+                    key={college.id} 
+                    onClick={() => navigate(`/colleges/${college.id}`)}
+                    className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer bg-white dark:bg-zinc-900"
+                  >
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-900 dark:text-white">{college.name}</div>
                       <div className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{college.email || 'No email provided'}</div>

@@ -105,6 +105,12 @@ model User {
   reset_otp         String?
   otp_expires_at    DateTime?
 
+  // Settings & Preferences
+  email_signature     String?   @db.Text
+  working_hours_start String?   @default("09:00")
+  working_hours_end   String?   @default("18:00")
+  working_days        String?   @default("MON,TUE,WED,THU,FRI")
+
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -118,6 +124,7 @@ model User {
   status_history_changes LeadStatusHistory[]
   imports                Import[]
   email_templates        EmailTemplate[]
+  notifications          Notification[]
 
   @@map("users")
 }
@@ -139,7 +146,8 @@ model College {
 
   // Relationships
   leads   Lead[]
-  creator User?  @relation("CreatedColleges", fields: [created_by], references: [id])
+  creator  User?            @relation("CreatedColleges", fields: [created_by], references: [id])
+  contacts CollegeContact[]
 
   @@map("colleges")
 }
@@ -294,4 +302,36 @@ model EmailTemplate {
   creator User? @relation(fields: [created_by], references: [id])
 
   @@map("email_templates")
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  title      String
+  message    String
+  type       String   // LEAD_ASSIGNED, FOLLOWUP_OVERDUE, LEAD_UPDATED, SYSTEM
+  is_read    Boolean  @default(false)
+  link       String?  // e.g., "/leads/abc-123"
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, is_read])
+  @@map("notifications")
+}
+
+model CollegeContact {
+  id          String   @id @default(uuid())
+  college_id  String
+  name        String
+  designation String?  // TPO, Dean, HOD, etc.
+  email       String?
+  phone       String?
+  is_primary  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  college College @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  
+  @@map("college_contacts")
 }

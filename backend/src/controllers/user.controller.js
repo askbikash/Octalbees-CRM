@@ -119,7 +119,7 @@ const updateUserStatus = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, phone, security_question, security_answer } = req.body;
+    const { name, phone, security_question, security_answer, email_signature, working_hours_start, working_hours_end, working_days } = req.body;
     const userId = req.user.id;
 
     if (!name) {
@@ -129,11 +129,15 @@ const updateProfile = async (req, res) => {
     const updateData = { name, phone: phone || null };
     if (security_question !== undefined) updateData.security_question = security_question;
     if (security_answer !== undefined) updateData.security_answer = security_answer;
+    if (email_signature !== undefined) updateData.email_signature = email_signature;
+    if (working_hours_start !== undefined) updateData.working_hours_start = working_hours_start;
+    if (working_hours_end !== undefined) updateData.working_hours_end = working_hours_end;
+    if (working_days !== undefined) updateData.working_days = working_days;
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      select: { id: true, name: true, email: true, role: true, phone: true, is_active: true, security_question: true }
+      select: { id: true, name: true, email: true, role: true, phone: true, is_active: true, security_question: true, email_signature: true, working_hours_start: true, working_hours_end: true, working_days: true }
     });
 
     res.status(200).json({ success: true, message: 'Profile updated', data: updatedUser });
