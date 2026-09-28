@@ -29,11 +29,22 @@ const LeadDetails = () => {
   const toast = useToast();
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [users, setUsers] = useState([]);
+  const [emailLogs, setEmailLogs] = useState([]);
 
   useEffect(() => {
     fetchLeadDetails();
     fetchUsers();
+    fetchLeadEmailLogs();
   }, [id]);
+
+  const fetchLeadEmailLogs = async () => {
+    try {
+      const res = await api.get(`/emails/lead/${id}`);
+      setEmailLogs(res.data.data);
+    } catch (error) {
+      console.error('Failed to fetch email logs', error);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -432,8 +443,44 @@ const LeadDetails = () => {
               )}
             </div>
           </div>
-        </div>
 
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm mt-6">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+          <Mail size={16} className="text-purple-600 dark:text-orange-400" /> Sent Emails
+        </h3>
+        
+        <div className="space-y-4">
+          {emailLogs.length === 0 ? (
+            <p className="text-sm text-slate-400 dark:text-zinc-500 italic">No emails sent to this lead yet.</p>
+          ) : (
+            emailLogs.map((log) => (
+              <div key={log.id} className="bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 p-4 rounded-2xl flex flex-col sm:flex-row justify-between gap-4">
+                <div>
+                  <h4 className="font-semibold text-slate-800 dark:text-zinc-200">{log.subject}</h4>
+                  <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500 dark:text-zinc-400">
+                    <span className="flex items-center gap-1"><User size={12}/> {log.sender?.name}</span>
+                    <span className="flex items-center gap-1"><Calendar size={12}/> {new Date(log.sent_at).toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                  <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-md ${
+                    log.status === 'OPENED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' :
+                    log.status === 'CLICKED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                    'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'
+                  }`}>
+                    {log.status}
+                  </span>
+                  <div className="flex gap-3 text-xs text-slate-500 dark:text-zinc-400">
+                    <span title="Opens" className="flex items-center gap-1">👁️ {log.open_count}</span>
+                    <span title="Clicks" className="flex items-center gap-1">🖱️ {log.click_count}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+        </div>
       </div>
     </div>
   );

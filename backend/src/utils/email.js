@@ -87,13 +87,16 @@ const generateOTP = () => {
 /**
  * Send bulk email to multiple recipients
  */
-const sendBulkEmail = async (emails, subject, message, senderName) => {
+const sendBulkEmail = async (emailLogs, message, senderName, backendUrl) => {
   if (process.env.NODE_ENV === 'production') {
     const frontendUrl = process.env.FRONTEND_URL || 'https://crm.octalbees.com';
+    // Fallback if production function doesn't support emailLogs structure yet,
+    // we extract just emails to maintain compatibility.
+    const emails = emailLogs.map(log => log.to_email);
     const response = await fetch(`${frontendUrl}/api/send-bulk-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emails, subject, message, senderName })
+      body: JSON.stringify({ emails, subject: emailLogs[0]?.subject || '', message, senderName })
     });
     
     if (!response.ok) throw new Error('Vercel email proxy failed');
@@ -101,12 +104,15 @@ const sendBulkEmail = async (emails, subject, message, senderName) => {
   }
 
   const transporter = await createTransporter();
-  const emailList = Array.isArray(emails) ? emails : [emails];
   const formattedMessage = message
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br/>');
 
-  const htmlContent = `
+  // Send individual emails with unique tracking pixel and link wrappers
+  const sendPromises = emailLogs.map(log => {
+    const trackingPixel = `<img src="${backendUrl}/api/track/open/${log.id}" width="1" height="1" style="display:none;" alt="" />`;
+    
+    let htmlContent = `
 <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1f2937;">
   
   <!-- Body -->
@@ -128,17 +134,22 @@ const sendBulkEmail = async (emails, subject, message, senderName) => {
     </p>
   </div>
   
+  ${trackingPixel}
 </div>
-  `;
+    `;
 
-  // Send individual emails so "To" is the lead's email
-  const sendPromises = emailList.map(email => {
+    // Rewrite HTTP/HTTPS URLs in href attributes to point to the click tracker
+    htmlContent = htmlContent.replace(
+      /href="(https?:\/\/[^"]+)"/g, 
+      `href="${backendUrl}/api/track/click/${log.id}?url=$1"`
+    );
+
     return transporter.sendMail({
       from: `"${senderName || 'Octalbees CRM'}" <${process.env.SMTP_EMAIL}>`,
-      to: email,
+      to: log.to_email,
       cc: 'info@octalbees.com',
-      bcc: process.env.SMTP_EMAIL, // This uses your configured SMTP email
-      subject: subject,
+      bcc: process.env.SMTP_EMAIL,
+      subject: log.subject,
       html: htmlContent,
     });
   });

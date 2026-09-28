@@ -520,11 +520,23 @@ const bulkActionLeads = async (req, res) => {
         select: { id: true, email: true }
       });
       
-      const emails = leads.map(l => l.email);
-      
-      if (emails.length > 0) {
+      if (leads.length > 0) {
+        // Create EmailLog records to get their IDs for tracking
+        const createdEmailLogs = await Promise.all(
+          leads.map(l => prisma.emailLog.create({
+            data: {
+              lead_id: l.id,
+              to_email: l.email,
+              subject,
+              sent_by: userId,
+              status: 'SENT'
+            }
+          }))
+        );
+
+        const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
         const { sendBulkEmail } = require('../utils/email');
-        await sendBulkEmail(emails, subject, message, req.user.name);
+        await sendBulkEmail(createdEmailLogs, message, req.user.name, backendUrl);
         
         // 1. Log the email activities
         const activities = leads.map(l => ({

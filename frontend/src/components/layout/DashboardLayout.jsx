@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarDays, Building2, Settings, LogOut, Menu, X, Sun, Moon, Zap, Activity, FileText, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, Building2, Settings, LogOut, Menu, X, Sun, Moon, Zap, Activity, FileText, BarChart3, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import NotificationsMenu from './NotificationsMenu';
@@ -42,6 +42,7 @@ const DashboardLayout = () => {
     { name: 'Follow-ups', path: '/followups', icon: CalendarDays },
     { name: 'Colleges', path: '/colleges', icon: Building2 },
     { name: 'Templates', path: '/templates', icon: FileText },
+    { name: 'Email Logs', path: '/emails', icon: Mail },
   ];
 
   if (user?.role === 'ADMIN') {

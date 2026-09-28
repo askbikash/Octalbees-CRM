@@ -63,6 +63,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/track', require('./routes/tracking.routes'));
+app.use('/api/emails', require('./routes/emailLog.routes'));
 
 // Basic health check route
 app.get('/api/health', (req, res) => {

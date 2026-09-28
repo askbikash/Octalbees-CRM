@@ -19,6 +19,7 @@ import Settings from './pages/Settings';
 import AuditTrail from './pages/AuditTrail';
 import EmailTemplates from './pages/EmailTemplates';
 import Reports from './pages/Reports';
+import EmailLogs from './pages/EmailLogs';
 
 // Temporary placeholders for other pages
 const Placeholder = ({ title }) => (
@@ -66,6 +67,7 @@ const App = () => {
               <Route path="templates" element={<EmailTemplates />} />
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="emails" element={<EmailLogs />} />
             </Route>
             
           </Routes>

@@ -125,6 +125,7 @@ model User {
   imports                Import[]
   email_templates        EmailTemplate[]
   notifications          Notification[]
+  sent_emails            EmailLog[]          @relation("SentEmails")
 
   @@map("users")
 }
@@ -185,6 +186,7 @@ model Lead {
   follow_ups     FollowUp[]
   activities     Activity[]
   status_history LeadStatusHistory[]
+  email_logs     EmailLog[]
 
   // Indexes for performance optimization
   @@index([email])
@@ -300,6 +302,7 @@ model EmailTemplate {
 
   // Relationships
   creator User? @relation(fields: [created_by], references: [id])
+  email_logs EmailLog[]
 
   @@map("email_templates")
 }
@@ -334,4 +337,26 @@ model CollegeContact {
   college College @relation(fields: [college_id], references: [id], onDelete: Cascade)
   
   @@map("college_contacts")
+}
+
+model EmailLog {
+  id           String   @id @default(uuid())
+  lead_id      String?
+  to_email     String
+  subject      String
+  template_id  String?
+  sent_by      String?
+  sent_at      DateTime @default(now())
+  opened_at    DateTime?
+  open_count   Int      @default(0)
+  click_count  Int      @default(0)
+  status       String   @default("SENT") // SENT, OPENED, CLICKED, BOUNCED
+
+  lead     Lead?          @relation(fields: [lead_id], references: [id])
+  sender   User?          @relation("SentEmails", fields: [sent_by], references: [id])
+  template EmailTemplate? @relation(fields: [template_id], references: [id])
+  
+  @@index([lead_id])
+  @@index([sent_by])
+  @@map("email_logs")
 }
