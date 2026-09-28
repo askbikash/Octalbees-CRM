@@ -44,8 +44,10 @@ const Login = () => {
       }
     } catch (error) {
       if (error.response?.data?.errors) {
-        const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        setApiError(`Validation failed - ${messages}`);
+        const fieldMap = { email: 'Email', password: 'Password' };
+        const invalidFields = error.response.data.errors.map(err => fieldMap[err.path[0]] || err.path[0]).filter(Boolean);
+        const uniqueFields = [...new Set(invalidFields)];
+        setApiError(`Please check the following fields: ${uniqueFields.join(', ')}`);
       } else {
         setApiError(error.response?.data?.message || 'Failed to securely connect.');
       }

@@ -55,9 +55,20 @@ const Colleges = () => {
       fetchColleges();
     } catch (error) {
       if (error.response?.data?.errors) {
-        // Handle Zod validation errors from backend
-        const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        setSubmitError(`Validation failed - ${messages}`);
+        const fieldMap = {
+          name: 'College Name',
+          type: 'College Type',
+          city: 'City',
+          state: 'State',
+          email: 'Email',
+          phone: 'Phone',
+          website: 'Website'
+        };
+        const invalidFields = error.response.data.errors
+          .map(err => fieldMap[err.path[0]] || err.path[0])
+          .filter(Boolean);
+        const uniqueFields = [...new Set(invalidFields)];
+        setSubmitError(`Please check the following fields: ${uniqueFields.join(', ')}`);
       } else {
         setSubmitError(error.response?.data?.message || 'Failed to save college');
       }

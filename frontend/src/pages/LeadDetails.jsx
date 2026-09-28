@@ -74,8 +74,10 @@ const LeadDetails = () => {
       fetchLeadDetails();
     } catch (error) {
       if (error.response?.data?.errors) {
-        const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        toast.error(`Validation failed - ${messages}`);
+        const fieldMap = { status: 'Status', reason: 'Reason' };
+        const invalidFields = error.response.data.errors.map(err => fieldMap[err.path[0]] || err.path[0]).filter(Boolean);
+        const uniqueFields = [...new Set(invalidFields)];
+        toast.error(`Please check the following fields: ${uniqueFields.join(', ')}`);
       } else {
         toast.error(error.response?.data?.message || 'Failed to update status');
       }
@@ -92,8 +94,10 @@ const LeadDetails = () => {
       fetchLeadDetails();
     } catch (error) {
       if (error.response?.data?.errors) {
-        const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        toast.error(`Validation failed - ${messages}`);
+        const fieldMap = { assigned_to: 'Assignee' };
+        const invalidFields = error.response.data.errors.map(err => fieldMap[err.path[0]] || err.path[0]).filter(Boolean);
+        const uniqueFields = [...new Set(invalidFields)];
+        toast.error(`Please check the following fields: ${uniqueFields.join(', ')}`);
       } else {
         toast.error(error.response?.data?.message || 'Failed to update assignee');
       }

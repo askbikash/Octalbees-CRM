@@ -317,8 +317,24 @@ const Leads = () => {
       if (error.response?.status === 409 && error.response?.data?.isDuplicateWarning) {
         setDuplicateWarning(error.response.data.duplicates);
       } else if (error.response?.data?.errors) {
-        const messages = error.response.data.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-        setSubmitError(`Validation failed - ${messages}`);
+        const fieldMap = {
+          name: 'Name',
+          email: 'Email Address',
+          phone: 'Phone Number',
+          designation: 'Designation',
+          college_id: 'College',
+          lead_type: 'Lead Type',
+          source: 'Source',
+          priority: 'Priority',
+          subject: 'Subject',
+          message: 'Message'
+        };
+        const invalidFields = error.response.data.errors
+          .map(err => fieldMap[err.path[0]] || err.path[0])
+          .filter(Boolean);
+        
+        const uniqueFields = [...new Set(invalidFields)];
+        setSubmitError(`Please check the following fields: ${uniqueFields.join(', ')}`);
       } else {
         setSubmitError(error.response?.data?.message || 'Failed to save lead');
       }
@@ -335,7 +351,8 @@ const Leads = () => {
       lead_type: lead.lead_type || 'STUDENT',
       source: lead.source || 'OTHER',
       priority: lead.priority || 'MEDIUM',
-      college_id: lead.college_id || ''
+      college_id: lead.college_id || '',
+      assigned_to: lead.assigned_to || ''
     });
     setDuplicateWarning(null);
     setIsModalOpen(true);
