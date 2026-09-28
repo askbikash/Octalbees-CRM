@@ -152,7 +152,7 @@ const Leads = () => {
     }
     
     if (action === 'email') {
-      setEmailModal({ open: true, subject: '', message: '' });
+      openEmailModal(selectedLeads);
       return;
     }
 
