@@ -103,7 +103,7 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Welcome back, {user?.name.split(' ')[0]} 👋
+            Welcome back, {user?.name.split(' ')[0]}
           </h1>
           <p className="text-slate-500 dark:text-zinc-400 mt-1">Here's what's happening with your leads today.</p>
         </div>

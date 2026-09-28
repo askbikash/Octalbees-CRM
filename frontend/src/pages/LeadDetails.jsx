@@ -165,8 +165,8 @@ const LeadDetails = () => {
           </div>
         </div>
         
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex gap-2">
+        <div className="flex flex-col md:items-end items-start gap-3 w-full md:w-auto mt-4 md:mt-0">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href);
@@ -196,6 +196,7 @@ const LeadDetails = () => {
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50" size={16} />
           </div>
+          </div>
           
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-slate-400 dark:text-zinc-500">Assigned to:</span>
@@ -213,7 +214,6 @@ const LeadDetails = () => {
             </select>
           </div>
         </div>
-      </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -324,7 +324,7 @@ const LeadDetails = () => {
                 const stepLabels = { NEW: 'New', CONTACTED: 'Contacted', INTERESTED: 'Interested', FOLLOW_UP: 'Follow Up', MEETING_SCHEDULED: 'Meeting', NEGOTIATION: 'Negotiation', CONVERTED: 'Converted' };
                 return (
                   <React.Fragment key={step}>
-                    <div className="flex flex-col items-center min-w-[70px]">
+                    <div className="flex flex-col items-center min-w-[70px] shrink-0">
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all shrink-0 ${
                         isLost ? 'border-red-300 bg-red-50 text-red-500 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400' :
                         isCurrent ? 'border-purple-500 bg-purple-600 text-white dark:border-orange-500 dark:bg-orange-500 shadow-sm shadow-purple-500/30 dark:shadow-orange-500/30' :
@@ -342,7 +342,7 @@ const LeadDetails = () => {
                       </span>
                     </div>
                     {i < arr.length - 1 && (
-                      <div className={`flex-1 h-0.5 min-w-[20px] mt-[-12px] ${
+                      <div className={`flex-1 h-0.5 min-w-[30px] shrink-0 mt-[-12px] ${
                         isActive && i < currentIndex ? 'bg-emerald-400 dark:bg-emerald-500/40' : 'bg-slate-200 dark:bg-zinc-700'
                       }`} />
                     )}
