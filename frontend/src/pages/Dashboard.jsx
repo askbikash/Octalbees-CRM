@@ -8,19 +8,19 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import api from '../services/api';
 
 const StatCard = ({ title, value, icon: Icon, trend, accent }) => (
-  <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
-    <div className="flex items-start justify-between mb-3">
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${accent || 'bg-purple-50 dark:bg-zinc-800 text-purple-600 dark:text-orange-400'}`}>
-        <Icon size={22} />
+  <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex items-start justify-between mb-2 sm:mb-3">
+      <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${accent || 'bg-purple-50 dark:bg-zinc-800 text-purple-600 dark:text-orange-400'}`}>
+        <Icon className="w-5 h-5 sm:w-[22px] sm:h-[22px]" />
       </div>
       {trend && (
-        <span className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full border ${trend.colorClass}`}>
-          {trend.icon && <trend.icon size={12} />} {trend.value}
+        <span className={`flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full border ${trend.colorClass}`}>
+          {trend.icon && <trend.icon size={10} className="sm:w-3 sm:h-3" />} {trend.value}
         </span>
       )}
     </div>
-    <h3 className="text-slate-500 dark:text-zinc-400 text-sm font-medium mb-0.5">{title}</h3>
-    <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+    <h3 className="text-slate-500 dark:text-zinc-400 text-xs sm:text-sm font-medium mb-0.5">{title}</h3>
+    <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
   </div>
 );
 
@@ -99,19 +99,19 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Welcome back, {user?.name.split(' ')[0]}
           </h1>
-          <p className="text-slate-500 dark:text-zinc-400 mt-1">Here's what's happening with your leads today.</p>
+          <p className="text-sm sm:text-base text-slate-500 dark:text-zinc-400 mt-1">Here's what's happening with your leads today.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           {user.role === 'ADMIN' && (
             <button
               onClick={handleExport}
-              className="px-5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-sm flex items-center gap-2"
+              className="w-full sm:w-auto px-5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-sm flex items-center justify-center gap-2"
             >
               <Download size={16} />
               Export Report
@@ -119,7 +119,7 @@ const Dashboard = () => {
           )}
           <button
             onClick={() => navigate('/leads')}
-            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 flex items-center gap-2"
+            className="w-full sm:w-auto px-5 py-2.5 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white text-white rounded-xl font-bold transition-colors shadow-sm shadow-purple-600/20 dark:shadow-purple-500/20 flex items-center justify-center gap-2"
           >
             <Plus size={16} />
             Add New Lead
@@ -128,7 +128,7 @@ const Dashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard
           title="Total Leads"
           value={kpis.totalLeads}
@@ -148,6 +148,13 @@ const Dashboard = () => {
           accent="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400"
         />
         <StatCard
+          title="Email Open Rate"
+          value={`${charts?.emailStats?.sent > 0 ? Math.round((charts.emailStats.opened / charts.emailStats.sent) * 100) : 0}%`}
+          icon={Mail}
+          accent="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+          trend={charts?.emailStats?.sent > 0 ? { value: `${charts.emailStats.opened} opened`, colorClass: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" } : null}
+        />
+        <StatCard
           title="Pending Follow-ups"
           value={kpis.pendingFollowUps}
           icon={CalendarDays}
@@ -163,33 +170,33 @@ const Dashboard = () => {
       </div>
 
       {/* Middle Row: Today's Tasks + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Today's Follow-ups */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <CalendarDays size={18} className="text-purple-600 dark:text-orange-400" />
+          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <CalendarDays size={18} className="text-purple-600 dark:text-orange-400 w-4 h-4 sm:w-[18px] sm:h-[18px]" />
               Today's Follow-ups
             </h3>
-            <button onClick={() => navigate('/followups')} className="text-sm font-bold text-purple-600 dark:text-orange-400 hover:underline">View All</button>
+            <button onClick={() => navigate('/followups')} className="text-xs sm:text-sm font-bold text-purple-600 dark:text-orange-400 hover:underline">View All</button>
           </div>
           <div className="flex-1 divide-y divide-slate-100 dark:divide-zinc-800 max-h-[320px] overflow-y-auto">
             {todaysFollowUps && todaysFollowUps.length > 0 ? todaysFollowUps.map(fu => (
-              <div key={fu.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors" onClick={() => navigate(`/leads/${fu.lead?.id}`)}>
-                <div className="w-9 h-9 rounded-lg bg-purple-50 dark:bg-zinc-800 text-purple-600 dark:text-orange-400 flex items-center justify-center shrink-0">
-                  {fu.type === 'CALL' ? <Phone size={16} /> : fu.type === 'EMAIL' ? <Mail size={16} /> : fu.type === 'WHATSAPP' ? <MessageCircle size={16} /> : <CalendarDays size={16} />}
+              <div key={fu.id} className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors" onClick={() => navigate(`/leads/${fu.lead?.id}`)}>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-purple-50 dark:bg-zinc-800 text-purple-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+                  {fu.type === 'CALL' ? <Phone size={14} className="sm:w-4 sm:h-4" /> : fu.type === 'EMAIL' ? <Mail size={14} className="sm:w-4 sm:h-4" /> : fu.type === 'WHATSAPP' ? <MessageCircle size={14} className="sm:w-4 sm:h-4" /> : <CalendarDays size={14} className="sm:w-4 sm:h-4" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{fu.lead?.name}</p>
-                  <p className="text-xs text-slate-400 dark:text-zinc-500 truncate">{fu.lead?.lead_code} • {fu.type} • {new Date(fu.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">{fu.lead?.name}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-400 dark:text-zinc-500 truncate">{fu.lead?.lead_code} • {fu.type} • {new Date(fu.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">Pending</span>
+                <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">Pending</span>
               </div>
             )) : (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-zinc-600">
-                <CheckCircle2 size={32} className="mb-2 text-emerald-400" />
-                <p className="font-semibold">All clear for today!</p>
-                <p className="text-xs mt-1">No follow-ups scheduled.</p>
+              <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-slate-400 dark:text-zinc-600">
+                <CheckCircle2 size={32} className="mb-2 text-emerald-400 w-6 h-6 sm:w-8 sm:h-8" />
+                <p className="font-semibold text-sm sm:text-base">All clear for today!</p>
+                <p className="text-[10px] sm:text-xs mt-1">No follow-ups scheduled.</p>
               </div>
             )}
           </div>
@@ -197,32 +204,32 @@ const Dashboard = () => {
 
         {/* Recent Activity */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Clock size={18} className="text-purple-600 dark:text-orange-400" />
+          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 dark:border-zinc-800">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Clock size={18} className="text-purple-600 dark:text-orange-400 w-4 h-4 sm:w-[18px] sm:h-[18px]" />
               Recent Activity
             </h3>
           </div>
           <div className="flex-1 divide-y divide-slate-100 dark:divide-zinc-800 max-h-[320px] overflow-y-auto">
             {recentActivities && recentActivities.length > 0 ? recentActivities.map(act => (
-              <div key={act.id} className="px-5 py-3 flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 flex items-center justify-center shrink-0 mt-0.5">
+              <div key={act.id} className="px-4 sm:px-5 py-3 flex items-start gap-3">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 flex items-center justify-center shrink-0 mt-0.5">
                   {getActivityIcon(act.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-700 dark:text-zinc-300 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-zinc-300 leading-relaxed">
                     <span className="font-bold">{act.user?.name || 'System'}</span>{' '}
                     <span className="text-slate-500 dark:text-zinc-400">{act.description}</span>{' '}
                     <span className="font-semibold text-purple-600 dark:text-orange-400 cursor-pointer hover:underline" onClick={() => navigate(`/leads/${act.lead_id}`)}>{act.lead?.name}</span>
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">{formatTime(act.created_at)}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-400 dark:text-zinc-500 mt-0.5">{formatTime(act.created_at)}</p>
                 </div>
               </div>
             )) : (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-zinc-600">
-                <Clock size={32} className="mb-2" />
-                <p className="font-semibold">No activity yet</p>
-                <p className="text-xs mt-1">Start working on leads to see activity here.</p>
+              <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-slate-400 dark:text-zinc-600">
+                <Clock size={32} className="mb-2 w-6 h-6 sm:w-8 sm:h-8" />
+                <p className="font-semibold text-sm sm:text-base">No activity yet</p>
+                <p className="text-[10px] sm:text-xs mt-1">Start working on leads to see activity here.</p>
               </div>
             )}
           </div>
@@ -230,18 +237,18 @@ const Dashboard = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Bar Chart: Leads by Status */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col h-[380px]">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4">Leads by Pipeline Status</h3>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col h-[300px] sm:h-[380px]">
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-4">Leads by Pipeline Status</h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={charts.statusData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#888' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: '#888' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#888' }} axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{ fill: 'transparent' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '13px' }}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
                 />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {charts.statusData.map((entry, index) => (
@@ -254,8 +261,8 @@ const Dashboard = () => {
         </div>
 
         {/* Pie Chart: Leads by Source */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col h-[380px]">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4">Lead Sources</h3>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col h-[300px] sm:h-[380px]">
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-4">Lead Sources</h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -263,8 +270,8 @@ const Dashboard = () => {
                   data={charts.sourceData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={65}
-                  outerRadius={105}
+                  innerRadius={50}
+                  outerRadius={80}
                   paddingAngle={4}
                   dataKey="value"
                   stroke="none"
@@ -274,9 +281,9 @@ const Dashboard = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '13px' }}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
                 />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>

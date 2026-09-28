@@ -85,6 +85,14 @@ const getDashboardStats = async (req, res) => {
       take: 10
     });
 
+    // 6. Email Performance
+    const emailWhere = role === 'ADMIN' ? {} : { sent_by: userId };
+    const emailStats = {
+      sent: await prisma.emailLog.count({ where: emailWhere }),
+      opened: await prisma.emailLog.count({ where: { ...emailWhere, status: 'OPENED' } }),
+      failed: await prisma.emailLog.count({ where: { ...emailWhere, status: 'FAILED' } })
+    };
+
     res.status(200).json({
       success: true,
       data: {
@@ -97,7 +105,8 @@ const getDashboardStats = async (req, res) => {
         },
         charts: {
           statusData: statusGroups.map(g => ({ name: g.status, value: g._count.status })),
-          sourceData: sourceGroups.map(g => ({ name: g.source, value: g._count.source }))
+          sourceData: sourceGroups.map(g => ({ name: g.source, value: g._count.source })),
+          emailStats
         },
         todaysFollowUps,
         recentActivities,

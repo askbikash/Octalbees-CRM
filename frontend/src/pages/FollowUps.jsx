@@ -1,14 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, CheckCircle2, XCircle, AlertCircle, Phone, Mail, Calendar, Clock, Loader2, MessageCircle, X, ChevronLeft, ChevronRight, List, Grid3X3 } from 'lucide-react';
+import { CalendarDays, CheckCircle2, XCircle, AlertCircle, Phone, Mail, Calendar, Clock, Loader2, MessageCircle, X, ChevronLeft, ChevronRight, List, Grid3X3, GripVertical } from 'lucide-react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { ListSkeleton } from '../components/ui/Skeleton';
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
+
+// Draggable Card Component for Calendar Detail Panel
+const DraggableFollowUpCard = ({ fu, openActionModal, getTypeIcon }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: fu.id,
+    data: { followUp: fu }
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className="p-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm relative group z-10"
+    >
+      <div 
+        {...attributes} 
+        {...listeners} 
+        className="absolute top-2 right-2 p-1 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <GripVertical size={16} />
+      </div>
+      
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-600/10 flex items-center justify-center text-purple-600 dark:text-orange-400">
+            {getTypeIcon(fu.type)}
+          </span>
+          <div>
+            <p className="text-xs font-bold text-purple-600 dark:text-orange-400">{fu.type}</p>
+            <p className="text-[10px] text-slate-500 dark:text-zinc-500">
+              {new Date(fu.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+        </div>
+        <span className={cn(
+          "text-[10px] font-bold px-2 py-0.5 rounded-full mr-4",
+          fu.status === 'COMPLETED' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+          fu.status === 'MISSED' ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
+          "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+        )}>
+          {fu.status}
+        </span>
+      </div>
+      <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">{fu.lead?.name}</h4>
+      {fu.lead?.phone && <p className="text-xs font-mono text-slate-500 dark:text-zinc-400 mt-1">📞 {fu.lead.phone}</p>}
+      {fu.notes && <p className="text-xs text-slate-500 dark:text-zinc-500 italic mt-1 truncate">"{fu.notes}"</p>}
+      {fu.assigned_user && <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">→ {fu.assigned_user.name}</p>}
+
+      {fu.status === 'PENDING' && (
+        <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-zinc-800">
+          <button
+            onClick={() => openActionModal(fu.id, 'COMPLETED')}
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 transition-colors"
+          >
+            Complete
+          </button>
+          <button
+            onClick={() => openActionModal(fu.id, 'MISSED')}
+            className="py-1.5 px-2 rounded-lg text-[11px] font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-colors"
+          >
+            <XCircle size={14} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FollowUps = () => {
   const [followUps, setFollowUps] = useState([]);
@@ -17,7 +92,12 @@ const FollowUps = () => {
   const [actionModal, setActionModal] = useState({ open: false, id: null, status: null });
   const [actionNotes, setActionNotes] = useState('');
   const [isActioning, setIsActioning] = useState(false);
+  const [activeDragItem, setActiveDragItem] = useState(null);
   const toast = useToast();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   // Calendar state
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
@@ -65,6 +145,35 @@ const FollowUps = () => {
     }
   };
 
+  const handleDragStart = (e) => {
+    setActiveDragItem(e.active.data.current?.followUp);
+  };
+
+  const handleDragEnd = async (e) => {
+    setActiveDragItem(null);
+    const { active, over } = e;
+    
+    if (over && over.id) {
+      const targetDateStr = over.id; // YYYY-MM-DD
+      const followUp = active.data.current?.followUp;
+      
+      if (followUp) {
+        try {
+          const oldDate = new Date(followUp.scheduled_at);
+          const newDate = new Date(targetDateStr);
+          // Preserve the original time
+          newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds());
+          
+          await api.patch(`/followups/${followUp.id}`, { scheduled_at: newDate.toISOString() });
+          toast.success('Follow-up rescheduled!');
+          fetchCalendarData();
+        } catch (error) {
+          toast.error('Failed to reschedule.');
+        }
+      }
+    }
+  };
+
   const openActionModal = (id, status) => {
     setActionModal({ open: true, id, status });
     setActionNotes('');
@@ -108,7 +217,9 @@ const FollowUps = () => {
 
   const getDateKey = (day) => {
     const d = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-    return d.toISOString().split('T')[0];
+    // Adjust for local timezone offset when getting YYYY-MM-DD
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offset).toISOString().split('T')[0];
   };
 
   const isToday = (day) => {
@@ -122,6 +233,69 @@ const FollowUps = () => {
     today.setHours(0, 0, 0, 0);
     return d < today;
   };
+
+// Droppable Day Cell
+const DroppableDayCell = ({ day, dateKey, dayFollowUps, isSelected, past, todayClass, onSelect }) => {
+  const { setNodeRef, isOver } = useDroppable({ id: dateKey });
+  const pending = dayFollowUps.filter(f => f.status === 'PENDING');
+  const completed = dayFollowUps.filter(f => f.status === 'COMPLETED');
+  const missed = dayFollowUps.filter(f => f.status === 'MISSED');
+
+  return (
+    <div
+      ref={setNodeRef}
+      onClick={onSelect}
+      className={cn(
+        "h-24 md:h-28 border p-1.5 md:p-2 cursor-pointer transition-all relative overflow-hidden",
+        todayClass ? "border-purple-300 dark:border-orange-500/50 bg-purple-50/50 dark:bg-orange-500/5" : "border-slate-100 dark:border-zinc-800/50",
+        isSelected ? "ring-2 ring-purple-500 dark:ring-orange-500 bg-purple-50 dark:bg-purple-900/10" : "hover:bg-slate-50 dark:hover:bg-zinc-800/30",
+        isOver && "ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-[1.02] z-10"
+      )}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span className={cn(
+          "text-xs md:text-sm font-bold w-6 h-6 md:w-7 md:h-7 flex items-center justify-center rounded-full",
+          todayClass ? "bg-purple-600 dark:bg-orange-500 text-white" : "text-slate-700 dark:text-zinc-300"
+        )}>
+          {day}
+        </span>
+      </div>
+
+      {/* Follow-up dots/badges */}
+      <div className="flex flex-wrap gap-0.5 mt-0.5">
+        {pending.length > 0 && (
+          <span className={cn(
+            "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+            past && pending.length > 0
+              ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+          )}>
+            {pending.length} {past ? '⚠' : '⏳'}
+          </span>
+        )}
+        {completed.length > 0 && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+            {completed.length} ✓
+          </span>
+        )}
+        {missed.length > 0 && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+            {missed.length} ✗
+          </span>
+        )}
+      </div>
+
+      {/* Preview of first follow-up on larger screens */}
+      {dayFollowUps.length > 0 && (
+        <div className="hidden md:block mt-1">
+          <p className="text-[10px] text-slate-600 dark:text-zinc-400 truncate font-medium">
+            {dayFollowUps[0].lead?.name}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
 
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(calendarDate);
@@ -137,65 +311,21 @@ const FollowUps = () => {
     for (let day = 1; day <= daysInMonth; day++) {
       const dateKey = getDateKey(day);
       const dayFollowUps = calendarData[dateKey] || [];
-      const pending = dayFollowUps.filter(f => f.status === 'PENDING');
-      const completed = dayFollowUps.filter(f => f.status === 'COMPLETED');
-      const missed = dayFollowUps.filter(f => f.status === 'MISSED');
       const isSelected = selectedDay === day;
       const past = isPast(day);
       const todayClass = isToday(day);
 
       cells.push(
-        <div
+        <DroppableDayCell 
           key={day}
-          onClick={() => setSelectedDay(isSelected ? null : day)}
-          className={cn(
-            "h-24 md:h-28 border p-1.5 md:p-2 cursor-pointer transition-all relative overflow-hidden",
-            todayClass ? "border-purple-300 dark:border-orange-500/50 bg-purple-50/50 dark:bg-orange-500/5" : "border-slate-100 dark:border-zinc-800/50",
-            isSelected ? "ring-2 ring-purple-500 dark:ring-orange-500 bg-purple-50 dark:bg-purple-900/10" : "hover:bg-slate-50 dark:hover:bg-zinc-800/30"
-          )}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className={cn(
-              "text-xs md:text-sm font-bold w-6 h-6 md:w-7 md:h-7 flex items-center justify-center rounded-full",
-              todayClass ? "bg-purple-600 dark:bg-orange-500 text-white" : "text-slate-700 dark:text-zinc-300"
-            )}>
-              {day}
-            </span>
-          </div>
-
-          {/* Follow-up dots/badges */}
-          <div className="flex flex-wrap gap-0.5 mt-0.5">
-            {pending.length > 0 && (
-              <span className={cn(
-                "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                past && pending.length > 0
-                  ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-              )}>
-                {pending.length} {past ? '⚠' : '⏳'}
-              </span>
-            )}
-            {completed.length > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                {completed.length} ✓
-              </span>
-            )}
-            {missed.length > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                {missed.length} ✗
-              </span>
-            )}
-          </div>
-
-          {/* Preview of first follow-up on larger screens */}
-          {dayFollowUps.length > 0 && (
-            <div className="hidden md:block mt-1">
-              <p className="text-[10px] text-slate-600 dark:text-zinc-400 truncate font-medium">
-                {dayFollowUps[0].lead?.name}
-              </p>
-            </div>
-          )}
-        </div>
+          day={day}
+          dateKey={dateKey}
+          dayFollowUps={dayFollowUps}
+          isSelected={isSelected}
+          past={past}
+          todayClass={todayClass}
+          onSelect={() => setSelectedDay(isSelected ? null : day)}
+        />
       );
     }
 
@@ -277,115 +407,91 @@ const FollowUps = () => {
 
       {/* ===== CALENDAR VIEW ===== */}
       {viewMode === 'calendar' && (
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-          {/* Calendar Header */}
-          <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30">
-            <div className="flex items-center gap-3">
-              <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 transition-colors">
-                <ChevronLeft size={20} />
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+            {/* Calendar Header */}
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30">
+              <div className="flex items-center gap-3">
+                <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 transition-colors">
+                  <ChevronLeft size={20} />
+                </button>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white min-w-[180px] text-center">
+                  {monthNames[calendarDate.getMonth()]} {calendarDate.getFullYear()}
+                </h2>
+                <button onClick={nextMonth} className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 transition-colors">
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+              <button onClick={goToToday} className="px-4 py-2 text-sm font-bold text-purple-600 dark:text-orange-400 bg-purple-50 dark:bg-orange-500/10 rounded-xl hover:bg-purple-100 dark:hover:bg-orange-500/20 transition-colors">
+                Today
               </button>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white min-w-[180px] text-center">
-                {monthNames[calendarDate.getMonth()]} {calendarDate.getFullYear()}
-              </h2>
-              <button onClick={nextMonth} className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 transition-colors">
-                <ChevronRight size={20} />
-              </button>
             </div>
-            <button onClick={goToToday} className="px-4 py-2 text-sm font-bold text-purple-600 dark:text-orange-400 bg-purple-50 dark:bg-orange-500/10 rounded-xl hover:bg-purple-100 dark:hover:bg-orange-500/20 transition-colors">
-              Today
-            </button>
-          </div>
 
-          {/* Calendar Grid */}
-          {calendarLoading ? (
-            <div className="p-12 flex items-center justify-center">
-              <Loader2 className="animate-spin text-purple-500 dark:text-orange-400" size={32} />
-            </div>
-          ) : (
-            <div className="p-2 md:p-4">
-              {/* Day headers */}
-              <div className="grid grid-cols-7 mb-1">
-                {dayNames.map(d => (
-                  <div key={d} className="text-center text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider py-2">
-                    {d}
-                  </div>
-                ))}
+            {/* Calendar Grid */}
+            {calendarLoading ? (
+              <div className="p-12 flex items-center justify-center">
+                <Loader2 className="animate-spin text-purple-500 dark:text-orange-400" size={32} />
               </div>
-              {/* Calendar cells */}
-              <div className="grid grid-cols-7 rounded-xl overflow-hidden border border-slate-100 dark:border-zinc-800">
-                {renderCalendar()}
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center gap-4 mt-4 px-2 text-[11px] text-slate-500 dark:text-zinc-400 font-medium">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> Pending</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Overdue/Missed</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Completed</span>
-              </div>
-            </div>
-          )}
-
-          {/* Selected Day Detail Panel */}
-          {selectedDay && (
-            <div className="border-t border-slate-200 dark:border-zinc-800 p-4 md:p-6 bg-slate-50/50 dark:bg-zinc-950/30 animate-in slide-in-from-bottom-4 duration-200">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4">
-                📅 {selectedDay} {monthNames[calendarDate.getMonth()]} — {selectedDayData.length} follow-up{selectedDayData.length !== 1 ? 's' : ''}
-              </h3>
-              {selectedDayData.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-zinc-400">No follow-ups scheduled for this day.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {selectedDayData.map((fu) => (
-                    <div key={fu.id} className="p-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-600/10 flex items-center justify-center text-purple-600 dark:text-orange-400">
-                            {getTypeIcon(fu.type)}
-                          </span>
-                          <div>
-                            <p className="text-xs font-bold text-purple-600 dark:text-orange-400">{fu.type}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-zinc-500">
-                              {new Date(fu.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                        <span className={cn(
-                          "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                          fu.status === 'COMPLETED' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                          fu.status === 'MISSED' ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
-                          "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                        )}>
-                          {fu.status}
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">{fu.lead?.name}</h4>
-                      {fu.lead?.phone && <p className="text-xs font-mono text-slate-500 dark:text-zinc-400 mt-1">📞 {fu.lead.phone}</p>}
-                      {fu.notes && <p className="text-xs text-slate-500 dark:text-zinc-500 italic mt-1 truncate">"{fu.notes}"</p>}
-                      {fu.assigned_user && <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">→ {fu.assigned_user.name}</p>}
-
-                      {fu.status === 'PENDING' && (
-                        <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-zinc-800">
-                          <button
-                            onClick={() => openActionModal(fu.id, 'COMPLETED')}
-                            className="flex-1 py-1.5 rounded-lg text-[11px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 transition-colors"
-                          >
-                            Complete
-                          </button>
-                          <button
-                            onClick={() => openActionModal(fu.id, 'MISSED')}
-                            className="py-1.5 px-2 rounded-lg text-[11px] font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-colors"
-                          >
-                            <XCircle size={14} />
-                          </button>
-                        </div>
-                      )}
+            ) : (
+              <div className="p-2 md:p-4">
+                {/* Day headers */}
+                <div className="grid grid-cols-7 mb-1">
+                  {dayNames.map(d => (
+                    <div key={d} className="text-center text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider py-2">
+                      {d}
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+                {/* Calendar cells */}
+                <div className="grid grid-cols-7 rounded-xl overflow-hidden border border-slate-100 dark:border-zinc-800">
+                  {renderCalendar()}
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center gap-4 mt-4 px-2 text-[11px] text-slate-500 dark:text-zinc-400 font-medium">
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> Pending</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Overdue/Missed</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Completed</span>
+                </div>
+              </div>
+            )}
+
+            {/* Selected Day Detail Panel */}
+            {selectedDay && (
+              <div className="border-t border-slate-200 dark:border-zinc-800 p-4 md:p-6 bg-slate-50/50 dark:bg-zinc-950/30 animate-in slide-in-from-bottom-4 duration-200">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4">
+                  📅 {selectedDay} {monthNames[calendarDate.getMonth()]} — {selectedDayData.length} follow-up{selectedDayData.length !== 1 ? 's' : ''}
+                </h3>
+                {selectedDayData.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-zinc-400">No follow-ups scheduled for this day.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {selectedDayData.map((fu) => (
+                      <DraggableFollowUpCard 
+                        key={fu.id} 
+                        fu={fu} 
+                        openActionModal={openActionModal} 
+                        getTypeIcon={getTypeIcon} 
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <DragOverlay>
+            {activeDragItem ? (
+              <div className="opacity-90 scale-105 shadow-2xl rotate-2">
+                <DraggableFollowUpCard 
+                  fu={activeDragItem} 
+                  openActionModal={() => {}} 
+                  getTypeIcon={getTypeIcon} 
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {/* ===== LIST VIEW ===== */}
